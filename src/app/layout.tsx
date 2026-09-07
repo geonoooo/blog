@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { geist, pretendard, siteConfig } from "@/shared/config";
 import { ThemeProvider, ThemeScript } from "@/shared/providers";
-import { Footer, Header } from "@/shared/ui";
+import { Footer, Header, PageTransition } from "@/shared/ui";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -66,7 +66,9 @@ export default function RootLayout({
         />
         <ThemeProvider>
           <Header />
-          <main className="flex-1 py-10">{children}</main>
+          <main className="flex-1 py-10">
+            <PageTransition>{children}</PageTransition>
+          </main>
           <Footer />
         </ThemeProvider>
       </body>

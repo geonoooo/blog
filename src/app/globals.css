@@ -80,6 +80,48 @@ body {
   color: var(--color-accent-foreground);
 }
 
+/* 라우팅 시 새 페이지가 아래에서 올라오며 나타난다. View Transition을 쓰지
+   않는다. 전환 중에는 화면이 스냅샷으로 고정돼 그동안 스크롤이 먹지 않기
+   때문이다. 일반 CSS 애니메이션은 실제 DOM 위에서 돌아 그 제약이 없다.
+
+   900ms · cubic-bezier(0.33, 1, 0.68, 1)은 claude.com 블로그의 진입 곡선을
+   측정해서 맞춘 값이다. 끝을 길게 끌어야 "스르륵"으로 읽힌다.
+
+   fill-mode가 backwards인 이유는 종료 후 transform을 남기지 않기 위해서다.
+   both로 두면 transform: none이 계속 적용된 상태가 되고, 안쪽 sticky 목차가
+   그 영향을 받을 수 있다. */
+.page-enter {
+  animation: page-enter 900ms cubic-bezier(0.33, 1, 0.68, 1) backwards;
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* 동작 줄이기를 켠 환경에서는 translateY만 뺀다. 제자리 페이드는 화면을
+   가로지르는 움직임이 없어 동작 민감도의 대상이 아니다. */
+@media (prefers-reduced-motion: reduce) {
+  .page-enter {
+    animation-name: page-enter-still;
+  }
+}
+
+@keyframes page-enter-still {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 /* prose 색은 토큰에 연결한다. 토큰이 다크에서 뒤집히므로 prose-invert가 필요 없다. */
 .prose {
   --tw-prose-body: var(--color-body);
