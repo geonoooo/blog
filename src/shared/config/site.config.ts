@@ -23,7 +23,7 @@ export const siteConfig = {
   name: AUTHOR_HANDLE,
   title: `${AUTHOR_HANDLE}.dev`,
   description:
-    "프론트엔드·인프라 학습 기록. TypeScript, Next.js, React부터 Nginx, AWS, GCP까지 직접 겪으며 정리한 글들을 모읍니다.",
+    "프론트엔드 개발하면서 실제로 밟은 문제를 측정하고 정리합니다. React, Next.js, Vite부터 네트워크·DB까지 직접 겪은 기록.",
   url: getSiteUrl(),
   author: {
     name: AUTHOR_HANDLE,
