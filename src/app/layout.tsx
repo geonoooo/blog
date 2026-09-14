@@ -21,6 +21,24 @@ export const metadata: Metadata = {
       "application/rss+xml": `${siteConfig.url}/rss.xml`,
     },
   },
+  // max-image-preview:large가 있어야 검색결과에 큰 썸네일이 붙는다. 기본값은 작은 썸네일이다.
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+  verification: {
+    google: siteConfig.verification.google,
+    other: siteConfig.verification.naver
+      ? { "naver-site-verification": siteConfig.verification.naver }
+      : {},
+  },
   openGraph: {
     type: "website",
     locale: "ko_KR",
