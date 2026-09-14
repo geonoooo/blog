@@ -65,6 +65,8 @@ src/
 
 "블로그 같은 작은 프로젝트에 FSD는 오버엔지니어링이 아닌가?" 라는 생각에 그냥 `features`랑 `widgets` 레이어를 지워버렸습니다. 나중에 시리즈·검색·댓글 같은 게 들어오면 그때 넣지 않을까 싶습니다.
 
+같은 고민을 나중에 사내 관리 도구에서 다시 했고, 거기서는 네 레이어로 정리했습니다. 파일 기반 라우팅이 폴더 구조를 먼저 정해버리는 문제까지 [작은 React 프로젝트에서 FSD를 그대로 쓰지 않기로 했다](/posts/folder-names-dont-enforce-cohesion)에 적었습니다.
+
 대신 얻는 게 있습니다. post 관련된 컴포넌트·함수가 전부 한 경로로 들어와서 일관성이 있어요.
 
 ```ts
@@ -277,7 +279,7 @@ export function generateStaticParams() {
 
 ## 4. UI에서 고민한 자잘한 것들
 
-**다크모드 토글.** 처음엔 Light / System / Dark 3버튼을 인라인으로 헤더에 붙였습니다. 그런데 헤더가 너무 빡빡해 보여서, 아이콘 하나 눌러서 순환되는 단일 토글로 바꿨습니다. 순서는 light → dark → system. "지금이 어떤 모드인지" 한눈에 안 보인다는 단점이 있긴 한데, 그건 `aria-label`로 커버했습니다.
+**다크모드 토글.** 처음엔 Light / System / Dark 3버튼을 인라인으로 헤더에 붙였습니다. 그런데 헤더가 너무 빡빡해 보여서, 아이콘 하나 눌러서 순환되는 단일 토글로 바꿨습니다. 순서는 light → dark → system. "지금이 어떤 모드인지" 한눈에 안 보인다는 단점이 있긴 한데, 그건 `aria-label`로 커버했습니다. 이 토글의 첫 페인트 깜빡임을 나중에 `useSyncExternalStore`로 고쳤다고 커밋에 적었는데, 재보니 아니었습니다. 그 측정은 [다크모드 깜빡임, useSyncExternalStore가 정말 해결했을까?](/posts/theme-flash-and-usesyncexternalstore)에 적었습니다.
 
 **헤더의 Posts / Categories.** 처음엔 "헤더가 답답하니까 아래로 내릴까?" 싶었는데, 블로그의 핵심 탐색 경로를 숨기는 건 아니다 싶어서 헤더에 그대로 뒀습니다. 헤더가 무거워 보였던 건 테마 토글을 압축해서 해결됐습니다. 요소 수보다 밀도가 문제일 때가 많더라고요.
 
@@ -343,6 +345,8 @@ export async function generateMetadata({ params }): Promise<Metadata> {
 - **검색** — 글이 적을 땐 Fuse.js로 충분, 많아지면 Pagefind
 - **조회 분석** — Plausible 또는 PostHog
 - **글 작성 UX** — 계속 MDX 파일로 갈지, CMS(Sanity/Contentful)를 붙일지
+
+이 중 조회수는 이 글 뒤에 Supabase로 붙였습니다. Hits·Upstash와 비교한 기준은 [블로그 조회수 하나 넣는데 DB까지 필요할까?](/posts/adding-visitor-counter-with-supabase)에 적었습니다.
 
 정적 사이트에서 상태가 섞이기 시작하면 지금의 단순한 구조가 어떻게 바뀌는지를 다음 글에서 다뤄보려고 합니다.
 

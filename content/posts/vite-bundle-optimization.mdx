@@ -117,6 +117,8 @@ export * from "./queries";
 >
 > "한 폴더 안에 있는 건 다 `index.ts`에 노출하는 게 깔끔하지" 라는 직감이 가장 위험합니다. 배럴은 _cross-feature 경계_ 라서, 그 경계로 새면 안 될 것(page·side-effect 모듈)과 자유롭게 다녀도 되는 것(hook·type)을 의식적으로 구분해야 lazy가 살아남습니다.
 
+이 구분을 ESLint로 강제하려다 두 번 조용히 실패한 기록은 [작은 React 프로젝트에서 FSD를 그대로 쓰지 않기로 했다](/posts/folder-names-dont-enforce-cohesion)에 적었습니다.
+
 ## 2. 함정 2 — `manualChunks`가 코드 스플리팅을 다시 무력화한다
 
 배럴에서 page를 빼고 나니 페이지 _자체_ 의 코드는 정리됐는데, 네트워크 탭엔 또 다른 큰 청크가 계속 따라붙고 있었습니다. 이번엔 vendor 쪽.

@@ -26,6 +26,8 @@ JS 힙에만 있으니 `localStorage`를 훑는 스크립트로는 못 가져갑
 > [!NOTE] 환경
 > React 19 + TanStack Router/Query, `fetch`를 직접 감싼 클라이언트. 백엔드는 FastAPI. access 토큰 30분, refresh 쿠키 12시간입니다.
 
+이 글은 로그인한 뒤의 세션 유지만 다룹니다. 그 앞 단계인 회원가입 이메일 인증은 [NestJS 이메일 인증을 구현하다가 SMTP 포트까지 파고들었다](/posts/email-verification-code-and-smtp)에 적었습니다.
+
 ## 전제 — refresh 토큰은 JS가 읽을 수 없다
 
 `HttpOnly` 쿠키에 들어 있어서 `document.cookie`로 꺼낼 수 없습니다. 막히는 대상은 브라우저가 아니라 **스크립트**입니다. 브라우저는 오히려 이 토큰을 다루는 유일한 주체입니다 — 받아서 저장하고, 요청에 자동으로 붙여 보냅니다.
