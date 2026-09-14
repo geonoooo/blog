@@ -5,10 +5,7 @@ import { incrementPostView, POST_VIEWS_TAG } from "@/entities/stats";
 const BOT_PATTERN =
   /bot|crawler|spider|crawling|preview|fetch|monitor|headless|lighthouse|pingdom|slurp|baiduspider/i;
 
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ slug: string }> },
-) {
+export async function POST(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   if (process.env.NODE_ENV !== "production") {
     return new Response(null, { status: 204 });
   }

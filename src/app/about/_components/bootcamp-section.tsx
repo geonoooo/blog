@@ -20,10 +20,7 @@ export function BootcampSection() {
       <SectionTitle>Bootcamp</SectionTitle>
       <div className="space-y-4">
         {BOOTCAMP.map((entry) => (
-          <EducationCard
-            key={`${entry.school}-${entry.period}`}
-            entry={entry}
-          />
+          <EducationCard key={`${entry.school}-${entry.period}`} entry={entry} />
         ))}
       </div>
     </section>

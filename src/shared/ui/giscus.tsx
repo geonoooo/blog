@@ -3,13 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useTheme } from "@/shared/providers";
 
-type Mapping =
-  | "pathname"
-  | "url"
-  | "title"
-  | "og:title"
-  | "specific"
-  | "number";
+type Mapping = "pathname" | "url" | "title" | "og:title" | "specific" | "number";
 
 interface GiscusProps {
   repo: string;
@@ -23,10 +17,7 @@ interface GiscusProps {
 
 const ORIGIN = "https://giscus.app";
 
-function resolveTheme(
-  theme: string,
-  systemDark: boolean,
-): "light" | "dark" {
+function resolveTheme(theme: string, systemDark: boolean): "light" | "dark" {
   if (theme === "dark" || theme === "light") return theme;
   return systemDark ? "dark" : "light";
 }
@@ -87,9 +78,7 @@ export function Giscus({
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
 
     const send = () => {
-      const iframe = container.querySelector<HTMLIFrameElement>(
-        "iframe.giscus-frame",
-      );
+      const iframe = container.querySelector<HTMLIFrameElement>("iframe.giscus-frame");
       iframe?.contentWindow?.postMessage(
         { giscus: { setConfig: { theme: resolveTheme(theme, mq.matches) } } },
         ORIGIN,

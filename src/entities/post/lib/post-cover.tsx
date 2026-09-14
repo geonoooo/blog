@@ -19,9 +19,7 @@ const CATEGORY_ACCENT: Record<PostCategory, string> = {
 function SiteMark({ accent }: { accent: string }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-      <div
-        style={{ width: 14, height: 14, borderRadius: 999, background: accent }}
-      />
+      <div style={{ width: 14, height: 14, borderRadius: 999, background: accent }} />
       <span style={{ fontSize: 28, color: "#9ca3af" }}>{siteConfig.title}</span>
     </div>
   );
@@ -72,76 +70,73 @@ export async function createPostCoverImage(post: Post): Promise<ImageResponse> {
   });
 
   return new ImageResponse(
-    (
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "space-between",
+        padding: "72px 80px",
+        background: "linear-gradient(135deg, #0a0a0a 0%, #111827 50%, #1f2937 100%)",
+        color: "#ffffff",
+        fontFamily: "Pretendard",
+      }}
+    >
       <div
         style={{
-          width: "100%",
-          height: "100%",
           display: "flex",
-          flexDirection: "column",
+          alignItems: "center",
           justifyContent: "space-between",
-          padding: "72px 80px",
-          background:
-            "linear-gradient(135deg, #0a0a0a 0%, #111827 50%, #1f2937 100%)",
-          color: "#ffffff",
-          fontFamily: "Pretendard",
         }}
       >
+        <SiteMark accent={accent} />
+        <CategoryPill label={CATEGORY_LABELS[post.category]} />
+      </div>
+
+      <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
         <div
           style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
+            fontSize: 72,
+            fontWeight: 700,
+            lineHeight: 1.15,
+            letterSpacing: "-0.02em",
+            display: "-webkit-box",
+            WebkitLineClamp: 3,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
           }}
         >
-          <SiteMark accent={accent} />
-          <CategoryPill label={CATEGORY_LABELS[post.category]} />
+          {post.title}
         </div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
-          <div
-            style={{
-              fontSize: 72,
-              fontWeight: 700,
-              lineHeight: 1.15,
-              letterSpacing: "-0.02em",
-              display: "-webkit-box",
-              WebkitLineClamp: 3,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
-            }}
-          >
-            {post.title}
-          </div>
-          <div
-            style={{
-              fontSize: 30,
-              color: "#d1d5db",
-              lineHeight: 1.4,
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
-            }}
-          >
-            {post.summary}
-          </div>
-        </div>
-
         <div
           style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            fontSize: 22,
-            color: "#9ca3af",
+            fontSize: 30,
+            color: "#d1d5db",
+            lineHeight: 1.4,
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
           }}
         >
-          <span>{siteConfig.author.name}</span>
-          <span>{date}</span>
+          {post.summary}
         </div>
       </div>
-    ),
+
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          fontSize: 22,
+          color: "#9ca3af",
+        }}
+      >
+        <span>{siteConfig.author.name}</span>
+        <span>{date}</span>
+      </div>
+    </div>,
     options,
   );
 }

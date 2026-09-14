@@ -19,14 +19,7 @@ const MOTIFS: Record<PostCover, ReactNode> = {
       <circle cx="28" cy="58" r="5" fill="currentColor" stroke="none" />
       <circle cx="80" cy="58" r="5" fill="currentColor" stroke="none" />
       <circle cx="132" cy="58" r="5" fill="currentColor" stroke="none" />
-      <circle
-        cx="108"
-        cy="32"
-        r="5"
-        fill="currentColor"
-        stroke="none"
-        opacity={0.5}
-      />
+      <circle cx="108" cy="32" r="5" fill="currentColor" stroke="none" opacity={0.5} />
     </>
   ),
   chunks: (
@@ -80,15 +73,7 @@ const MOTIFS: Record<PostCover, ReactNode> = {
         stroke="none"
         opacity={0.75}
       />
-      <rect
-        x="112"
-        y="24"
-        width="16"
-        height="44"
-        rx="3"
-        fill="currentColor"
-        stroke="none"
-      />
+      <rect x="112" y="24" width="16" height="44" rx="3" fill="currentColor" stroke="none" />
     </>
   ),
   envelope: (
@@ -97,15 +82,7 @@ const MOTIFS: Record<PostCover, ReactNode> = {
       <path d="M22 33l29 19 29-19" opacity={0.55} />
       <rect x="94" y="37" width="12" height="16" rx="3" opacity={0.45} />
       <rect x="110" y="37" width="12" height="16" rx="3" opacity={0.45} />
-      <rect
-        x="126"
-        y="37"
-        width="12"
-        height="16"
-        rx="3"
-        fill="currentColor"
-        stroke="none"
-      />
+      <rect x="126" y="37" width="12" height="16" rx="3" fill="currentColor" stroke="none" />
     </>
   ),
   gate: (
@@ -167,12 +144,66 @@ const MOTIFS: Record<PostCover, ReactNode> = {
   swatches: (
     <>
       <rect x="26" y="22" width="24" height="26" rx="4" fill="currentColor" stroke="none" />
-      <rect x="54" y="22" width="24" height="26" rx="4" fill="currentColor" stroke="none" opacity={0.75} />
-      <rect x="82" y="22" width="24" height="26" rx="4" fill="currentColor" stroke="none" opacity={0.5} />
-      <rect x="110" y="22" width="24" height="26" rx="4" fill="currentColor" stroke="none" opacity={0.28} />
-      <rect x="26" y="52" width="24" height="26" rx="4" fill="currentColor" stroke="none" opacity={0.28} />
-      <rect x="54" y="52" width="24" height="26" rx="4" fill="currentColor" stroke="none" opacity={0.5} />
-      <rect x="82" y="52" width="24" height="26" rx="4" fill="currentColor" stroke="none" opacity={0.75} />
+      <rect
+        x="54"
+        y="22"
+        width="24"
+        height="26"
+        rx="4"
+        fill="currentColor"
+        stroke="none"
+        opacity={0.75}
+      />
+      <rect
+        x="82"
+        y="22"
+        width="24"
+        height="26"
+        rx="4"
+        fill="currentColor"
+        stroke="none"
+        opacity={0.5}
+      />
+      <rect
+        x="110"
+        y="22"
+        width="24"
+        height="26"
+        rx="4"
+        fill="currentColor"
+        stroke="none"
+        opacity={0.28}
+      />
+      <rect
+        x="26"
+        y="52"
+        width="24"
+        height="26"
+        rx="4"
+        fill="currentColor"
+        stroke="none"
+        opacity={0.28}
+      />
+      <rect
+        x="54"
+        y="52"
+        width="24"
+        height="26"
+        rx="4"
+        fill="currentColor"
+        stroke="none"
+        opacity={0.5}
+      />
+      <rect
+        x="82"
+        y="52"
+        width="24"
+        height="26"
+        rx="4"
+        fill="currentColor"
+        stroke="none"
+        opacity={0.75}
+      />
       <rect x="110" y="52" width="24" height="26" rx="4" fill="currentColor" stroke="none" />
     </>
   ),

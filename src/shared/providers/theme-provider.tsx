@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  createContext,
-  use,
-  useCallback,
-  useEffect,
-  useSyncExternalStore,
-} from "react";
+import { createContext, use, useCallback, useEffect, useSyncExternalStore } from "react";
 
 export type Theme = "light" | "dark" | "system";
 
@@ -25,9 +19,7 @@ function isTheme(value: string | null): value is Theme {
 
 function resolve(theme: Theme): "light" | "dark" {
   if (theme !== "system") return theme;
-  return window.matchMedia("(prefers-color-scheme: dark)").matches
-    ? "dark"
-    : "light";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
 }
 
 function applyTheme(theme: Theme) {
@@ -84,11 +76,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     notify();
   }, []);
 
-  return (
-    <ThemeContext value={{ theme, setTheme }}>
-      {children}
-    </ThemeContext>
-  );
+  return <ThemeContext value={{ theme, setTheme }}>{children}</ThemeContext>;
 }
 
 export function useTheme() {

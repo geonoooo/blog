@@ -15,10 +15,7 @@ export function EducationSection() {
       <SectionTitle>Education</SectionTitle>
       <div className="space-y-4">
         {EDUCATION.map((entry) => (
-          <EducationCard
-            key={`${entry.school}-${entry.period}`}
-            entry={entry}
-          />
+          <EducationCard key={`${entry.school}-${entry.period}`} entry={entry} />
         ))}
       </div>
     </section>

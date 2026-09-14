@@ -4,11 +4,12 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  --font-sans: var(--font-geist), var(--font-pretendard), ui-sans-serif,
-    system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial,
-    sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-    "Liberation Mono", "Courier New", monospace;
+  --font-sans:
+    var(--font-geist), var(--font-pretendard), ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+    monospace;
 
   /* 중립색은 완전 무채색(chroma 0)이 아니라 살짝 푸른 회색이다.
      순수 회색은 "기본값" 인상을 주고, 미세한 색조가 있어야 정돈돼 보인다. */
@@ -154,7 +155,7 @@ figure[data-rehype-pretty-code-figure] code {
 figure[data-rehype-pretty-code-figure] code[data-line-numbers] > [data-line]::before {
   counter-increment: line;
   content: counter(line);
-  @apply mr-4 inline-block w-4 text-right text-muted-foreground;
+  @apply text-muted-foreground mr-4 inline-block w-4 text-right;
 }
 
 figure[data-rehype-pretty-code-figure] [data-highlighted-line] {
@@ -174,7 +175,7 @@ figure[data-rehype-pretty-code-figure] [data-highlighted-line] {
 }
 
 .markdown-alert {
-  @apply my-6 rounded-md border-l-4 bg-muted/40 px-4 py-3;
+  @apply bg-muted/40 my-6 rounded-md border-l-4 px-4 py-3;
   border-color: var(--alert-color, var(--color-border));
 }
 

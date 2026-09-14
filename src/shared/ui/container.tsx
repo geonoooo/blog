@@ -15,15 +15,6 @@ const sizeClass: Record<ContainerSize, string> = {
   post: "max-w-[1400px]",
 };
 
-export function Container({
-  size = "default",
-  className,
-  ...rest
-}: ContainerProps) {
-  return (
-    <div
-      className={cn("mx-auto w-full px-5", sizeClass[size], className)}
-      {...rest}
-    />
-  );
+export function Container({ size = "default", className, ...rest }: ContainerProps) {
+  return <div className={cn("mx-auto w-full px-5", sizeClass[size], className)} {...rest} />;
 }

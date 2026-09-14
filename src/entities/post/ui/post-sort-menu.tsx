@@ -19,8 +19,7 @@ interface PostSortMenuProps {
 export function PostSortMenu({ query }: PostSortMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const current =
-    POST_SORT_OPTIONS.find((option) => option.value === query.sort) ??
-    POST_SORT_OPTIONS[0];
+    POST_SORT_OPTIONS.find((option) => option.value === query.sort) ?? POST_SORT_OPTIONS[0];
 
   return (
     <div

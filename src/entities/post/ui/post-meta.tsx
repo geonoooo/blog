@@ -8,7 +8,7 @@ interface PostMetaProps {
 
 export function PostMeta({ date, readingTime }: PostMetaProps) {
   return (
-    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+    <div className="text-muted-foreground flex items-center gap-2 text-xs">
       <time dateTime={date}>{formatDate(date)}</time>
       <span aria-hidden>·</span>
       <span>{readingTime} min read</span>

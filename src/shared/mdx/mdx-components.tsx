@@ -3,11 +3,7 @@ import Link from "next/link";
 import type { AnchorHTMLAttributes, ImgHTMLAttributes } from "react";
 import type { MDXComponents } from "mdx/types";
 
-function MdxLink({
-  href,
-  children,
-  ...rest
-}: AnchorHTMLAttributes<HTMLAnchorElement>) {
+function MdxLink({ href, children, ...rest }: AnchorHTMLAttributes<HTMLAnchorElement>) {
   if (!href) return <a {...rest}>{children}</a>;
   const isExternal = /^https?:\/\//.test(href);
   if (isExternal) {
@@ -34,7 +30,7 @@ function MdxImage(props: ImgHTMLAttributes<HTMLImageElement>) {
       width={Number(width) || 1200}
       height={Number(height) || 630}
       sizes="(min-width: 768px) 640px, 100vw"
-      className="rounded-md border border-border"
+      className="border-border rounded-md border"
       {...(rest as Partial<ImageProps>)}
     />
   );

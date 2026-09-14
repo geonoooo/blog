@@ -23,11 +23,7 @@ export function PostCard({ post, views }: PostCardProps) {
 
       <div className="flex flex-1 flex-col p-5">
         {/* 카드 전체가 클릭 영역이다. 배지 링크는 z-10으로 위에 둔다. */}
-        <PostCategoryBadge
-          category={post.category}
-          asLink
-          className="relative z-10 self-start"
-        />
+        <PostCategoryBadge category={post.category} asLink className="relative z-10 self-start" />
 
         <Link
           href={post.permalink}

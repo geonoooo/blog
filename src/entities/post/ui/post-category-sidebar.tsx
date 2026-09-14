@@ -16,10 +16,7 @@ interface PostCategorySidebarProps {
  * 그래서 이 컴포넌트에 클라이언트 코드가 필요 없다.
  * lg 이상에서는 왼쪽 세로 목록, 그 아래에서는 가로로 접힌다.
  */
-export function PostCategorySidebar({
-  query,
-  className,
-}: PostCategorySidebarProps) {
+export function PostCategorySidebar({ query, className }: PostCategorySidebarProps) {
   const hasFilter = query.categories.length > 0 || query.tag !== null;
   const itemClass = "lg:w-full lg:justify-start";
 

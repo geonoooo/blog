@@ -15,7 +15,5 @@ export function sortPosts<T extends Sortable>(
   const byDate = sortByDateDesc(posts);
   if (sort !== "views") return byDate;
 
-  return byDate.sort(
-    (a, b) => (views?.[b.slug] ?? 0) - (views?.[a.slug] ?? 0),
-  );
+  return byDate.sort((a, b) => (views?.[b.slug] ?? 0) - (views?.[a.slug] ?? 0));
 }

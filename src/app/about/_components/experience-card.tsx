@@ -43,19 +43,13 @@ export function ExperienceCard({ entry }: { entry: ExperienceEntry }) {
             </span>
           )}
         </h3>
-        <span className="text-muted-foreground text-sm tabular-nums">
-          {entry.period}
-        </span>
+        <span className="text-muted-foreground text-sm tabular-nums">{entry.period}</span>
       </header>
 
-      {entry.tagline && (
-        <p className="text-muted-foreground mt-1.5 text-sm">{entry.tagline}</p>
-      )}
+      {entry.tagline && <p className="text-muted-foreground mt-1.5 text-sm">{entry.tagline}</p>}
 
       {entry.summary && (
-        <p className="text-foreground/80 mt-3 text-sm leading-relaxed">
-          {entry.summary}
-        </p>
+        <p className="text-foreground/80 mt-3 text-sm leading-relaxed">{entry.summary}</p>
       )}
 
       <div className="mt-4">

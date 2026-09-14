@@ -10,11 +10,7 @@ interface PostCategoryBadgeProps {
 }
 
 // 색은 globals.css에서 data-category -> --cat -> .category-badge로 흐른다.
-export function PostCategoryBadge({
-  category,
-  asLink = false,
-  className,
-}: PostCategoryBadgeProps) {
+export function PostCategoryBadge({ category, asLink = false, className }: PostCategoryBadgeProps) {
   const classes = cn(
     "category-badge inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium",
     asLink &&

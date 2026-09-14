@@ -20,13 +20,9 @@ export function PostHeader({ post }: PostHeaderProps) {
         {post.title}
       </h1>
 
-      <p className="text-muted-foreground mt-4 text-lg leading-relaxed">
-        {post.summary}
-      </p>
+      <p className="text-muted-foreground mt-4 text-lg leading-relaxed">{post.summary}</p>
 
-      <p className="text-foreground mt-8 text-[15px] font-semibold">
-        {siteConfig.author.name}
-      </p>
+      <p className="text-foreground mt-8 text-[15px] font-semibold">{siteConfig.author.name}</p>
       <p className="text-muted-foreground mt-1 flex items-center gap-2 text-sm">
         <time dateTime={post.date}>{formatDate(post.date)}</time>
         <span aria-hidden>·</span>

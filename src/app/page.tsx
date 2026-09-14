@@ -50,11 +50,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       </p>
 
       {/* 인기 글은 필터·정렬과 무관하게 전체 기준으로 고정한다. */}
-      <PopularPosts
-        posts={posts}
-        views={views}
-        className="border-border mt-8 border-b pb-10"
-      />
+      <PopularPosts posts={posts} views={views} className="border-border mt-8 border-b pb-10" />
 
       <div className="mt-10 lg:grid lg:grid-cols-[168px_1fr] lg:gap-10">
         <PostCategorySidebar
@@ -64,23 +60,13 @@ export default async function HomePage({ searchParams }: HomePageProps) {
 
         <div className="min-w-0">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
-            <p className="text-muted-foreground text-sm tabular-nums">
-              글 {matched.length}개
-            </p>
+            <p className="text-muted-foreground text-sm tabular-nums">글 {matched.length}개</p>
             <PostSortMenu query={query} />
           </div>
 
-          <PostList
-            posts={visible}
-            views={views}
-            empty="조건에 맞는 글이 없습니다."
-          />
+          <PostList posts={visible} views={views} empty="조건에 맞는 글이 없습니다." />
 
-          <PostLoadMore
-            query={query}
-            shown={visible.length}
-            total={matched.length}
-          />
+          <PostLoadMore query={query} shown={visible.length} total={matched.length} />
         </div>
       </div>
     </Container>

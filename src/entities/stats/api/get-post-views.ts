@@ -10,9 +10,7 @@ async function fetchPostViews(): Promise<Record<string, number>> {
   if (error) throw error;
 
   const rows = (data ?? []) as { slug: string; count: number }[];
-  return Object.fromEntries(
-    rows.map((row) => [row.slug, Number(row.count ?? 0)]),
-  );
+  return Object.fromEntries(rows.map((row) => [row.slug, Number(row.count ?? 0)]));
 }
 
 export const getPostViews = unstable_cache(fetchPostViews, ["post-views"], {
