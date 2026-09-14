@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import {
   filterPosts,
@@ -14,6 +15,11 @@ import {
 import { getPostViews } from "@/entities/stats";
 import { siteConfig } from "@/shared/config";
 import { Container } from "@/shared/ui";
+
+// 카테고리·태그·정렬은 전부 루트의 쿼리 조합이다. 어느 조합으로 들어와도 루트로 모은다.
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
 
 interface HomePageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>;

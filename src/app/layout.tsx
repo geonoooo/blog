@@ -14,8 +14,9 @@ export const metadata: Metadata = {
   authors: [{ name: siteConfig.author.name, url: siteConfig.url }],
   creator: siteConfig.author.name,
   publisher: siteConfig.author.name,
+  // canonical은 여기 두지 않는다. 기본값을 "/"로 깔면 그걸 덮지 않은 하위 페이지가
+  // 전부 홈의 중복으로 취급돼 색인에서 빠진다. 페이지마다 직접 적는다.
   alternates: {
-    canonical: "/",
     types: {
       "application/rss+xml": `${siteConfig.url}/rss.xml`,
     },
