@@ -40,6 +40,7 @@ grant  execute on function public.<fn>() to service_role;
 쓰기/증가/UPSERT 등 race condition 위험이 있는 연산은 **Postgres 함수**로 작성하고 `supabase.rpc()`로 호출. 클라이언트 측 read-modify-write 금지.
 
 `increment_visit()` 패턴 참고 (`supabase/migrations/0001_visit_counters.sql`):
+
 - `insert ... on conflict ... do update` 한 트랜잭션
 - 호출자가 다시 read 안 해도 되도록 결과를 `returns table(...)`로 반환
 

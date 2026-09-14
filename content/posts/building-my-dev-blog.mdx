@@ -20,14 +20,14 @@ draft: false
 
 먼저 고른 스택을 정리해보면 이렇습니다.
 
-| 항목       | 선택                    | 왜                             |
-| ---------- | ----------------------- | ------------------------------ |
-| 프레임워크 | Next.js 16 (App Router) | RSC + SSG, 최신 버전           |
-| 콘텐츠     | MDX + Velite            | frontmatter 검증·타입 자동생성 |
-| 스타일     | Tailwind 4 + typography | prose 클래스로 본문 스타일 끝  |
+| 항목       | 선택                    | 왜                                  |
+| ---------- | ----------------------- | ----------------------------------- |
+| 프레임워크 | Next.js 16 (App Router) | RSC + SSG, 최신 버전                |
+| 콘텐츠     | MDX + Velite            | frontmatter 검증·타입 자동생성      |
+| 스타일     | Tailwind 4 + typography | prose 클래스로 본문 스타일 끝       |
 | 테마       | 자체 구현               | 인라인 스크립트로 첫 페인트 전 적용 |
-| 폰트       | Pretendard (self-host)  | 한글 가독성                    |
-| 구조       | FSD                     | 뒤에서 자세히                  |
+| 폰트       | Pretendard (self-host)  | 한글 가독성                         |
+| 구조       | FSD                     | 뒤에서 자세히                       |
 
 MDX 처리에서 원래 Contentlayer를 쓰려고 했는데, 유지보수가 중단된 상태였습니다. 그래서 Velite로 갈아탔습니다. 하는 일은 거의 똑같습니다.. frontmatter 스키마를 검증해주고, 빌드 타임에 타입이 붙은 JSON을 만들어줍니다.
 

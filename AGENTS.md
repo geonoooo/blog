@@ -27,9 +27,11 @@
 문장 호흡 살리려고 비유를 끼우지 말 것. 사실 → 결과 → 규칙 순서로 단백하게.
 
 <!-- BEGIN:nextjs-agent-rules -->
+
 # This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
+
 <!-- END:nextjs-agent-rules -->
 
 # Project Rules (read before writing code)
@@ -127,4 +129,3 @@ vitest/jest 임의 추가 금지. 빌드 깨졌을 때 우회 금지 — 원인 
 ### 폰트
 
 - `next/font`로 로드. `<head>`에 직접 `<link>` 박지 말 것.
-

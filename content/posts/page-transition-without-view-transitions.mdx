@@ -36,20 +36,23 @@ await page.addInitScript(() => {
 
 결과입니다.
 
-| 항목 | 결과 |
-| --- | --- |
-| `startViewTransition` 호출 | **0회** |
-| `@view-transition` / `::view-transition-*` 규칙 | **0개** (4371개 룰 스캔) |
-| 내비게이션 | 풀 페이지 로드 (MPA) |
-| 프레임워크 | Webflow (`w-mod-js w-mod-ix`) |
+| 항목                                            | 결과                          |
+| ----------------------------------------------- | ----------------------------- |
+| `startViewTransition` 호출                      | **0회**                       |
+| `@view-transition` / `::view-transition-*` 규칙 | **0개** (4371개 룰 스캔)      |
+| 내비게이션                                      | 풀 페이지 로드 (MPA)          |
+| 프레임워크                                      | Webflow (`w-mod-js w-mod-ix`) |
 
 View Transitions API를 안 씁니다. React도 아닙니다.
 
 대신 DOM에 이런 요소가 박혀 있었습니다.
 
 ```html
-<div aria-hidden="true" class="transition_wrap"
-     style="opacity: 0; visibility: hidden; display: none;"></div>
+<div
+  aria-hidden="true"
+  class="transition_wrap"
+  style="opacity: 0; visibility: hidden; display: none;"
+></div>
 ```
 
 ```text
@@ -135,10 +138,10 @@ $ defaults read com.apple.universalaccess reduceMotion
 
 코드는 정상이었고 설정대로 0초로 끝나고 있었습니다. Playwright의 `reducedMotion` 컨텍스트로 양쪽을 재보니 명확했습니다.
 
-| 조건 | 전환 완료 |
-| --- | --- |
-| 동작 줄이기 끔 | 388ms |
-| 동작 줄이기 켬 | **55ms** |
+| 조건           | 전환 완료 |
+| -------------- | --------- |
+| 동작 줄이기 끔 | 388ms     |
+| 동작 줄이기 켬 | **55ms**  |
 
 `prefers-reduced-motion`은 "애니메이션을 끄라"가 아니라 **위치 이동을 줄이라**는 신호입니다. 제자리에서 일어나는 opacity 페이드는 화면을 가로지르는 움직임이 없어 해당 사항이 아닙니다. 전부 죽인 게 잘못이었습니다.
 
@@ -164,7 +167,9 @@ Next 소스에 이유가 주석으로 적혀 있습니다.
 // it's important that restore is handled quickly since it's fired on the popstate event
 // and we don't want to add any delay on a back/forward nav
 if (payload.type !== ACTION_RESTORE) {
-    startTransition(() => { setState(deferredPromise); });
+  startTransition(() => {
+    setState(deferredPromise);
+  });
 }
 ```
 
@@ -179,11 +184,11 @@ forward: () => window.history.forward(),
 
 같은 경로를 탑니다. 정리하면 이렇습니다.
 
-| 이동 방식 | 전환 |
-| --- | --- |
-| `<Link>` 클릭 | O |
-| `router.push()` / `replace()` | O |
-| 브라우저 뒤로/앞으로 버튼 | **X** |
+| 이동 방식                          | 전환  |
+| ---------------------------------- | ----- |
+| `<Link>` 클릭                      | O     |
+| `router.push()` / `replace()`      | O     |
+| 브라우저 뒤로/앞으로 버튼          | **X** |
 | `router.back()` / `history.back()` | **X** |
 
 의도된 설계입니다. 뒤로가기는 이미 본 화면으로 돌아가는 동작이라 지연을 넣지 않겠다는 것.
@@ -207,8 +212,12 @@ page-exit                              140ms
 group 보간을 끄고 옛 스냅샷을 아예 그리지 않는 것으로 해결했습니다.
 
 ```css
-::view-transition-group(.page) { animation: none; }
-::view-transition-old(.page)   { display: none; }
+::view-transition-group(.page) {
+  animation: none;
+}
+::view-transition-old(.page) {
+  display: none;
+}
 ```
 
 이러면 배경만 남은 상태에서 새 콘텐츠가 올라옵니다. Claude 블로그가 오버레이로 만드는 것과 같은 결과를, 오버레이 DOM 없이 얻습니다.
@@ -226,10 +235,10 @@ Webflow의 IX2는 rAF로 인라인 style을 직접 씁니다. Web Animations API
 **900ms가 넘습니다.** 제가 쓰던 280ms의 3배 이상입니다. 곡선을 이징에 대보면 `easeOutCubic`에 거의 일치합니다.
 
 | 진행률 | 측정값 | easeOutCubic |
-| --- | --- | --- |
-| 25% | 0.52 | 0.578 |
-| 50% | 0.84 | 0.875 |
-| 75% | 0.97 | 0.984 |
+| ------ | ------ | ------------ |
+| 25%    | 0.52   | 0.578        |
+| 50%    | 0.84   | 0.875        |
+| 75%    | 0.97   | 0.984        |
 
 75% 시점에 이미 97%가 진행되고, 남은 3%를 마지막 225ms에 걸쳐 소화합니다. 부드럽게 읽히는 건 이 꼬리 구간입니다.
 
@@ -297,8 +306,12 @@ CSS 애니메이션은 **요소가 DOM에 새로 삽입될 때만** 재생됩니
 }
 
 @keyframes page-enter-still {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 ```
 
@@ -333,21 +346,21 @@ header.border-border/60.bg-background/80  2560x114
 
 속성별로 다시 도는 단계입니다.
 
-| 애니메이션할 속성 | 다시 도는 단계 |
-| --- | --- |
-| `transform`, `opacity` | Composite |
-| `filter: blur()` | Paint → Composite |
+| 애니메이션할 속성         | 다시 도는 단계             |
+| ------------------------- | -------------------------- |
+| `transform`, `opacity`    | Composite                  |
+| `filter: blur()`          | Paint → Composite          |
 | `height`, `top`, `margin` | Layout → Paint → Composite |
 
 900ms 동안 매 프레임 도는 애니메이션이라, 여기서 `filter: blur()`를 끼우면 긴 글에서 프레임이 떨어집니다. 메인 스레드가 다른 작업으로 막혀도 애니메이션이 끊기지 않는 것 역시 컴포지터 스레드에서 돌기 때문입니다.
 
 `fill-mode`를 `backwards`로 둔 이유는 종료 후 `transform`을 남기지 않기 위해서입니다.
 
-| 값 | 시작 전 | 종료 후 |
-| --- | --- | --- |
-| 없음 | 원래 스타일 → 첫 프레임 깜빡임 | 원래 스타일 |
-| `both` | `from` 상태 | `to` 상태 **유지** |
-| `backwards` | `from` 상태 | 원래 스타일로 복귀 |
+| 값          | 시작 전                        | 종료 후            |
+| ----------- | ------------------------------ | ------------------ |
+| 없음        | 원래 스타일 → 첫 프레임 깜빡임 | 원래 스타일        |
+| `both`      | `from` 상태                    | `to` 상태 **유지** |
+| `backwards` | `from` 상태                    | 원래 스타일로 복귀 |
 
 `both`로 두면 끝난 뒤에도 `transform: none`이 적용된 상태로 남습니다. 값이 `none`이라 보기엔 무해하지만, 글 페이지 목차가 `sticky top-24`라 조상에 `transform`이 걸려 있으면 영향을 받을 수 있습니다. `backwards`는 애니메이션이 끝나면 선언을 놓습니다.
 
@@ -367,12 +380,12 @@ header.border-border/60.bg-background/80  2560x114
 
 Playwright로 다시 측정했습니다.
 
-| 항목 | 결과 |
-| --- | --- |
-| `page-enter` 재생 | 900ms, 이동할 때마다 |
-| `startViewTransition` 호출 | 0 |
-| **재생 중 스크롤** | `scrollTo(600)` → `scrollY = 600` |
-| 카테고리 필터(`/?category=typescript`) | 재생 안 함 |
+| 항목                                   | 결과                              |
+| -------------------------------------- | --------------------------------- |
+| `page-enter` 재생                      | 900ms, 이동할 때마다              |
+| `startViewTransition` 호출             | 0                                 |
+| **재생 중 스크롤**                     | `scrollTo(600)` → `scrollY = 600` |
+| 카테고리 필터(`/?category=typescript`) | 재생 안 함                        |
 
 세 번째 줄이 갈아엎은 이유 전부입니다. View Transition에서는 스냅샷에 갇혀 900ms를 쓸 수 없었습니다.
 

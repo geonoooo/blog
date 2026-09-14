@@ -24,18 +24,18 @@ UI를 만들거나 고치기 전에 이 문서를 확인한다. 여기 없는 �
 
 `chroma 0`(순수 회색)은 "기본값" 인상을 준다. 모든 중립 토큰에 **미세한 푸른 기(hue ~260, chroma 0.003~0.034)** 를 넣는다. 다크 배경도 순검이 아니라 아주 옅은 남색이다.
 
-| 토큰 | 용도 | 라이트 대비 |
-|---|---|---|
-| `background` | 페이지 바탕 | — |
-| `foreground` | **제목·UI 텍스트** | 17.7:1 |
-| `body` | **본문 텍스트.** 제목보다 흐리게 | 10.3:1 |
-| `muted-foreground` | 메타·요약·캡션 | 4.8:1 |
-| `muted` | 옅은 면 (인라인 코드, hover 배경) | — |
-| `border` | 모든 경계선 | — |
-| `accent` / `accent-foreground` | 반전 강조 (`::selection`) | — |
-| `brand` | 강조색 (아래 목록에만) | 5.1:1 |
-| `brand-subtle` | brand의 옅은 배경 (활성 pill) | — |
-| `ring` | focus-visible 링 (= brand) | — |
+| 토큰                           | 용도                              | 라이트 대비 |
+| ------------------------------ | --------------------------------- | ----------- |
+| `background`                   | 페이지 바탕                       | —           |
+| `foreground`                   | **제목·UI 텍스트**                | 17.7:1      |
+| `body`                         | **본문 텍스트.** 제목보다 흐리게  | 10.3:1      |
+| `muted-foreground`             | 메타·요약·캡션                    | 4.8:1       |
+| `muted`                        | 옅은 면 (인라인 코드, hover 배경) | —           |
+| `border`                       | 모든 경계선                       | —           |
+| `accent` / `accent-foreground` | 반전 강조 (`::selection`)         | —           |
+| `brand`                        | 강조색 (아래 목록에만)            | 5.1:1       |
+| `brand-subtle`                 | brand의 옅은 배경 (활성 pill)     | —           |
+| `ring`                         | focus-visible 링 (= brand)        | —           |
 
 **제목과 본문은 같은 색이 아니다.** 본문을 `foreground`로 두면 위계가 안 생긴다. 본문은 `text-body`, 제목은 `text-foreground`.
 
@@ -52,13 +52,13 @@ UI를 만들거나 고치기 전에 이 문서를 확인한다. 여기 없는 �
 
 `--color-cat-*` 5개. **점과 배지 텍스트에 같은 값을 쓰므로 텍스트 기준(4.5:1)** 을 맞춘다.
 
-| 카테고리 | hue | |
-|---|---|---|
-| Backend | 150 녹색 | |
-| React | 195 틸 | sRGB 경계라 라이트 채도 0.085로 제한. 올리면 clip된다 |
-| TypeScript | 253 파랑 | |
-| Deep Dive | 304 보라 | |
-| Tooling | 350 핑크 | 앰버였으나 brand와 헷갈려 옮김 |
+| 카테고리   | hue      |                                                       |
+| ---------- | -------- | ----------------------------------------------------- |
+| Backend    | 150 녹색 |                                                       |
+| React      | 195 틸   | sRGB 경계라 라이트 채도 0.085로 제한. 올리면 clip된다 |
+| TypeScript | 253 파랑 |                                                       |
+| Deep Dive  | 304 보라 |                                                       |
+| Tooling    | 350 핑크 | 앰버였으나 brand와 헷갈려 옮김                        |
 
 brand(hue 60) 주변의 따뜻한 영역은 비워둔다.
 
@@ -85,14 +85,14 @@ brand(hue 60) 주변의 따뜻한 영역은 비워둔다.
 
 ### 스케일
 
-| 역할 | 클래스 |
-|---|---|
-| 글 제목 (h1) | `text-[32px] sm:text-[40px] font-bold tracking-tight leading-[1.25]` |
-| 홈 헤드라인 | `text-[28px] sm:text-[32px] font-bold tracking-tight` |
-| 카드 제목 | `text-xl font-bold tracking-tight leading-snug` |
-| 글 요약 (상세) | `text-lg text-muted-foreground` |
-| 카드 요약 | `text-[15px] text-muted-foreground line-clamp-2` |
-| 메타 | `text-sm text-muted-foreground` |
+| 역할           | 클래스                                                               |
+| -------------- | -------------------------------------------------------------------- |
+| 글 제목 (h1)   | `text-[32px] sm:text-[40px] font-bold tracking-tight leading-[1.25]` |
+| 홈 헤드라인    | `text-[28px] sm:text-[32px] font-bold tracking-tight`                |
+| 카드 제목      | `text-xl font-bold tracking-tight leading-snug`                      |
+| 글 요약 (상세) | `text-lg text-muted-foreground`                                      |
+| 카드 요약      | `text-[15px] text-muted-foreground line-clamp-2`                     |
+| 메타           | `text-sm text-muted-foreground`                                      |
 
 ### 본문(prose)
 
@@ -106,12 +106,12 @@ brand(hue 60) 주변의 따뜻한 영역은 비워둔다.
 
 `Container`의 네 사이즈만 쓴다. 임의의 `max-w-*`를 페이지에 직접 쓰지 않는다.
 
-| size | 폭 | 용도 |
-|---|---|---|
-| `prose` | 640px | About |
-| `default` | 720px | 일반 페이지 |
-| `wide` | 960px | 목록, 헤더/푸터 |
-| `post` | 1400px | 포스트 상세 (본문 800px + 우측 목차 224px) |
+| size      | 폭     | 용도                                       |
+| --------- | ------ | ------------------------------------------ |
+| `prose`   | 640px  | About                                      |
+| `default` | 720px  | 일반 페이지                                |
+| `wide`    | 960px  | 목록, 헤더/푸터                            |
+| `post`    | 1400px | 포스트 상세 (본문 800px + 우측 목차 224px) |
 
 - 포스트 상세는 `[1fr, minmax(0,800px), 1fr]` 그리드. **본문은 화면 정중앙**, 목차는 우측 여백에 놓인다. 목차는 `xl`(1280px) 이상에서만.
 - 글 목록은 **2열 카드 그리드**다. `grid gap-x-6 gap-y-10 sm:grid-cols-2`, 카드는 `rounded-xl border border-border` 박스. 목록을 잘라 보여줄 때는 짝수로 끊는다 — 홀수면 마지막 줄에 카드 하나만 남는다.
