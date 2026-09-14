@@ -30,10 +30,13 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
   return {
     title: post.title,
     description: post.summary,
-    keywords: post.tags,
     authors: [{ name: siteConfig.author.name, url: siteConfig.url }],
+    // alternates는 부모 것을 덮어쓴다. types를 다시 적지 않으면 글 페이지에서 RSS 링크가 사라진다.
     alternates: {
       canonical: post.permalink,
+      types: {
+        "application/rss+xml": `${siteConfig.url}/rss.xml`,
+      },
     },
     openGraph: {
       type: "article",
