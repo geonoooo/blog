@@ -42,6 +42,7 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
       url: post.permalink,
       siteName: siteConfig.name,
       publishedTime: post.date,
+      modifiedTime: post.updated ?? post.date,
       authors: [siteConfig.author.name],
       tags: post.tags,
     },
@@ -69,7 +70,7 @@ export default async function PostPage({ params }: PostPageProps) {
     headline: post.title,
     description: post.summary,
     datePublished: post.date,
-    dateModified: post.date,
+    dateModified: post.updated ?? post.date,
     author: {
       "@type": "Person",
       name: siteConfig.author.name,

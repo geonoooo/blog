@@ -53,6 +53,8 @@ const posts = {
       title: s.string().max(120),
       summary: s.string().max(240),
       date: s.isodate(),
+      // 본문을 고친 날. 없으면 date와 같다고 본다.
+      updated: s.isodate().optional(),
       category: s.enum(POST_CATEGORIES),
       tags: s.array(s.string()).default([]),
       // 목록 카드 상단 SVG 커버의 모티프. 없으면 카테고리 기본값으로 떨어진다.

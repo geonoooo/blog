@@ -11,6 +11,7 @@ export function getPostListItems(): PostListItem[] {
     title: post.title,
     summary: post.summary,
     date: post.date,
+    updated: post.updated,
     category: post.category,
     tags: post.tags,
     cover: post.cover,

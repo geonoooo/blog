@@ -15,7 +15,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const postRoutes: MetadataRoute.Sitemap = getAllPosts().map((post) => ({
     url: `${baseUrl}${post.permalink}`,
-    lastModified: new Date(post.date),
+    lastModified: new Date(post.updated ?? post.date),
     priority: 0.7,
   }));
 
