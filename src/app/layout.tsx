@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { geist, pretendard, siteConfig } from "@/shared/config";
 import { ThemeProvider, ThemeScript } from "@/shared/providers";
-import { Footer, Header, PageTransition } from "@/shared/ui";
+import { Footer, Header, JsonLd, PageTransition } from "@/shared/ui";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -59,10 +59,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     >
       <body className="flex min-h-full flex-col" suppressHydrationWarning>
         <ThemeScript />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
-        />
+        <JsonLd data={websiteJsonLd} />
         <ThemeProvider>
           <Header />
           <main className="flex-1 py-10">

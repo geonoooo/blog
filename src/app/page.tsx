@@ -14,7 +14,7 @@ import {
 } from "@/entities/post";
 import { getPostViews } from "@/entities/stats";
 import { siteConfig } from "@/shared/config";
-import { Container } from "@/shared/ui";
+import { Container, JsonLd } from "@/shared/ui";
 
 // 카테고리·태그·정렬은 전부 루트의 쿼리 조합이다. 어느 조합으로 들어와도 루트로 모은다.
 export const metadata: Metadata = {
@@ -33,8 +33,33 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const matched = sortPosts(filterPosts(posts, query), query.sort, views);
   const visible = matched.slice(0, query.page * POSTS_PAGE_SIZE);
 
+  // 필터·정렬과 무관하게 전체 글을 싣는다. 쿼리가 붙은 주소도 canonical이 루트라
+  // 크롤러가 보는 건 결국 이 목록 하나다.
+  const blogJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Blog",
+    name: siteConfig.title,
+    url: siteConfig.url,
+    description: siteConfig.description,
+    inLanguage: "ko-KR",
+    author: {
+      "@type": "Person",
+      name: siteConfig.author.name,
+      url: siteConfig.url,
+    },
+    blogPost: posts.map((post) => ({
+      "@type": "BlogPosting",
+      headline: post.title,
+      description: post.summary,
+      datePublished: post.date,
+      dateModified: post.updated ?? post.date,
+      url: `${siteConfig.url}${post.permalink}`,
+    })),
+  };
+
   return (
     <Container size="wide">
+      <JsonLd data={blogJsonLd} />
       <p className="text-muted-foreground flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[15px]">
         <span>프론트엔드 개발자 {siteConfig.author.name}</span>
         <span aria-hidden>·</span>

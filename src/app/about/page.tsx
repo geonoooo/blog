@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import { Container } from "@/shared/ui";
+import { siteConfig } from "@/shared/config";
+import { buildBreadcrumbJsonLd } from "@/shared/lib";
+import { Container, JsonLd } from "@/shared/ui";
 import {
   BootcampSection,
   EducationSection,
@@ -17,9 +19,32 @@ export const metadata: Metadata = {
   alternates: { canonical: "/about" },
 };
 
+const profileJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "ProfilePage",
+  url: `${siteConfig.url}/about`,
+  inLanguage: "ko-KR",
+  mainEntity: {
+    "@type": "Person",
+    name: siteConfig.author.name,
+    url: `${siteConfig.url}/about`,
+    jobTitle: "프론트엔드 개발자",
+    email: `mailto:${siteConfig.author.email}`,
+    sameAs: [siteConfig.social.github],
+    knowsAbout: ["React", "Next.js", "TypeScript", "NestJS", "Docker"],
+  },
+};
+
+const breadcrumbJsonLd = buildBreadcrumbJsonLd([
+  { name: "홈", path: "/" },
+  { name: "About", path: "/about" },
+]);
+
 export default function AboutPage() {
   return (
     <Container size="prose">
+      <JsonLd data={profileJsonLd} />
+      <JsonLd data={breadcrumbJsonLd} />
       <ProfileHeader />
       <div className="space-y-14 pb-20">
         <Intro />

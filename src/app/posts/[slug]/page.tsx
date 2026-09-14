@@ -12,7 +12,8 @@ import {
 } from "@/entities/post";
 import { PostViewTracker } from "@/entities/stats";
 import { siteConfig } from "@/shared/config";
-import { Container } from "@/shared/ui";
+import { buildBreadcrumbJsonLd } from "@/shared/lib";
+import { Container, JsonLd } from "@/shared/ui";
 
 interface PostPageProps {
   params: Promise<{ slug: string }>;
@@ -92,14 +93,15 @@ export default async function PostPage({ params }: PostPageProps) {
     inLanguage: "ko-KR",
   };
 
+  const breadcrumbJsonLd = buildBreadcrumbJsonLd([
+    { name: "홈", path: "/" },
+    { name: post.title, path: post.permalink },
+  ]);
+
   return (
     <Container size="post">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(jsonLd).replaceAll("<", "\\u003c"),
-        }}
-      />
+      <JsonLd data={jsonLd} />
+      <JsonLd data={breadcrumbJsonLd} />
       <PostViewTracker slug={slug} />
       {/* 양쪽 1fr 사이에 640px 본문을 둬서 본문은 항상 가운데, 목차는 오른쪽 여백에 놓인다. */}
       <div className="xl:grid xl:grid-cols-[1fr_minmax(0,800px)_1fr] xl:gap-10">

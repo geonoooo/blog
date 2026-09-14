@@ -3,6 +3,7 @@ export * from "./footer";
 export * from "./giscus";
 export * from "./github-icon";
 export * from "./header";
+export * from "./json-ld";
 export * from "./logo";
 export * from "./nav-link";
 export * from "./page-transition";
