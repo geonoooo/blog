@@ -41,6 +41,13 @@ export function GET(): Response {
     <atom:link href="${baseUrl}/rss.xml" rel="self" type="application/rss+xml" />
     <description>${escapeXml(siteConfig.description)}</description>
     <language>ko</language>
+    <!-- 피드 리더가 글 목록 옆에 띄우는 채널 이미지. 없으면 리더가 파비콘을 긁어가거나 빈칸이 된다.
+         width/height는 RSS 2.0이 각각 144·400으로 상한을 둬서 선언하지 않는다 — 리더가 실제 크기를 쓴다. -->
+    <image>
+      <url>${baseUrl}${siteConfig.markPath}</url>
+      <title>${escapeXml(siteConfig.name)}</title>
+      <link>${baseUrl}</link>
+    </image>
     <lastBuildDate>${lastBuildDate}</lastBuildDate>
     ${items}
   </channel>

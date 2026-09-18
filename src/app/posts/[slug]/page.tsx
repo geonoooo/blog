@@ -67,6 +67,7 @@ export default async function PostPage({ params }: PostPageProps) {
 
   const postUrl = `${siteConfig.url}${post.permalink}`;
   const ogImageUrl = `${postUrl}/opengraph-image`;
+  const markUrl = `${siteConfig.url}${siteConfig.markPath}`;
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -79,11 +80,14 @@ export default async function PostPage({ params }: PostPageProps) {
       "@type": "Person",
       name: siteConfig.author.name,
       url: siteConfig.url,
+      // Person에는 Organization의 logo 대신 image를 쓴다.
+      image: markUrl,
     },
     publisher: {
       "@type": "Person",
       name: siteConfig.author.name,
       url: siteConfig.url,
+      image: markUrl,
     },
     keywords: post.tags.join(", "),
     articleSection: post.category,
