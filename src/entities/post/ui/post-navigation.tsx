@@ -15,7 +15,7 @@ export function PostNavigation({ previous, next }: PostNavigationProps) {
       {previous ? (
         <Link
           href={previous.permalink}
-          className="border-border hover:border-foreground focus-visible:ring-ring focus-visible:ring-offset-background flex flex-col gap-1 rounded-xl border p-4 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
+          className="surface-card border-border focus-visible:ring-ring focus-visible:ring-offset-background flex flex-col gap-1 rounded-xl border p-4 focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
         >
           <span className="text-muted-foreground flex items-center gap-1 text-xs">
             <ArrowLeft className="h-3 w-3" /> Previous
@@ -28,7 +28,7 @@ export function PostNavigation({ previous, next }: PostNavigationProps) {
       {next ? (
         <Link
           href={next.permalink}
-          className="border-border hover:border-foreground focus-visible:ring-ring focus-visible:ring-offset-background flex flex-col gap-1 rounded-xl border p-4 text-right transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none sm:col-start-2"
+          className="surface-card border-border focus-visible:ring-ring focus-visible:ring-offset-background flex flex-col gap-1 rounded-xl border p-4 text-right focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none sm:col-start-2"
         >
           <span className="text-muted-foreground flex items-center justify-end gap-1 text-xs">
             Next <ArrowRight className="h-3 w-3" />

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import {
   filterPosts,
   getPostListItems,
@@ -60,24 +59,12 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   return (
     <Container size="wide">
       <JsonLd data={blogJsonLd} />
-      <p className="text-muted-foreground flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[15px]">
-        <span>프론트엔드 개발자 {siteConfig.author.name}</span>
-        <span aria-hidden>·</span>
-        <Link
-          href="/about"
-          className="text-brand hover:text-brand-hover focus-visible:ring-ring focus-visible:ring-offset-background rounded-sm underline underline-offset-4 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-        >
-          소개
-        </Link>
-        <span aria-hidden>·</span>
-        <a
-          href={siteConfig.social.github}
-          target="_blank"
-          rel="noreferrer"
-          className="hover:text-foreground focus-visible:ring-ring focus-visible:ring-offset-background rounded-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
-        >
-          GitHub
-        </a>
+      {/* 소개·GitHub 링크는 헤더와 푸터에 이미 있다. 여기서 반복하지 않는다. */}
+      <h1 className="text-[28px] font-bold tracking-tight text-balance sm:text-[32px]">
+        직접 밟은 문제를 측정하고 정리합니다
+      </h1>
+      <p className="text-muted-foreground mt-3 max-w-[52ch] text-lg">
+        React, Next.js, Vite부터 네트워크·DB까지 개발하면서 겪은 내용을 씁니다.
       </p>
 
       {/* 인기 글은 필터·정렬과 무관하게 전체 기준으로 고정한다. */}

@@ -5,7 +5,7 @@ import { Container } from "./container";
 
 export function Footer() {
   return (
-    <footer className="border-border mt-24 border-t py-6">
+    <footer className="border-border bg-surface mt-24 border-t py-6">
       <Container
         size="wide"
         className="text-muted-foreground flex flex-col items-center justify-between gap-3 text-xs sm:flex-row sm:gap-6"

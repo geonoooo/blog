@@ -45,7 +45,7 @@ export function PostSortMenu({ query }: PostSortMenuProps) {
       </button>
 
       {isOpen && (
-        <div className="border-border bg-background absolute top-full right-0 z-20 mt-2 w-44 rounded-xl border p-1 shadow-lg">
+        <div className="surface-pop border-border absolute top-full right-0 z-20 mt-2 w-44 rounded-xl border p-1">
           {POST_SORT_OPTIONS.map((option) => {
             const isActive = option.value === query.sort;
             return (

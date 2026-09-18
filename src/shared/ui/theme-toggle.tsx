@@ -51,7 +51,7 @@ export function ThemeToggle() {
       {open && (
         <div
           role="menu"
-          className="border-border bg-background absolute top-full right-0 mt-2 w-32 overflow-hidden rounded-md border py-1 shadow-md"
+          className="surface-pop border-border absolute top-full right-0 mt-2 w-32 overflow-hidden rounded-md border py-1"
         >
           {MODES.map(({ value, label, Icon }) => {
             const isActive = current === value;

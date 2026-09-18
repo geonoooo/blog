@@ -13,23 +13,28 @@
 
   /* 중립색은 완전 무채색(chroma 0)이 아니라 살짝 푸른 회색이다.
      순수 회색은 "기본값" 인상을 주고, 미세한 색조가 있어야 정돈돼 보인다. */
-  --color-background: oklch(1 0 0);
-  --color-foreground: oklch(0.21 0.034 264); /* 제목·강조. 17.7:1 */
-  --color-body: oklch(0.373 0.034 259); /* 본문. 10.3:1 */
-  --color-muted-foreground: oklch(0.551 0.027 264); /* 메타. 4.8:1 */
-  --color-muted: oklch(0.967 0.003 264);
-  --color-border: oklch(0.928 0.006 264);
+  --color-background: oklch(0.976 0.004 264); /* 페이지 바탕. 순백이 아니다 */
+  --color-surface: oklch(1 0 0); /* 배경보다 한 단 위의 면. 카드·헤더·드롭다운 */
+  --color-foreground: oklch(0.21 0.034 264); /* 제목·UI. 배경 대비 16.6:1 */
+  --color-body: oklch(0.373 0.034 259); /* 본문. 9.6:1 */
+  --color-muted-foreground: oklch(0.535 0.028 264); /* 메타. 4.8:1 */
+  --color-muted: oklch(0.938 0.006 264);
+  --color-border: oklch(0.9 0.008 264);
+  --color-highlight: transparent; /* 카드 상단 1px. 다크에서만 보인다 */
   --color-accent: oklch(0.21 0.034 264);
   --color-accent-foreground: oklch(0.985 0.002 247);
 
-  /* 강조색. 로고·본문 링크·포커스 링·활성 상태에만. 흰 배경 대비 5.07:1 */
+  /* 강조색. 로고·본문 링크·포커스 링·활성 상태에만. 배경 대비 4.72:1 */
   --color-brand: oklch(0.55 0.14 60);
   --color-brand-hover: oklch(0.48 0.13 58);
-  --color-brand-subtle: oklch(0.96 0.03 75);
+  --color-brand-subtle: oklch(0.945 0.04 75);
+  /* 활성 pill 텍스트. brand를 그대로 쓰면 brand-subtle 위에서 4.49:1로 AA에 못 미친다.
+     한 단 어둡게 잡아 5.78:1을 만든다. */
+  --color-brand-subtle-foreground: oklch(0.48 0.13 58);
   --color-ring: oklch(0.55 0.14 60);
 
   /* 카테고리. 점과 배지 텍스트에 같은 값을 쓰므로 텍스트 기준(4.5:1)을 맞춘다.
-     brand(hue 60) 주변의 따뜻한 영역은 비워둔다. 흰 배경 대비 5.6~6.6:1 */
+     brand(hue 60) 주변의 따뜻한 영역은 비워둔다. 배경 대비 5.3~6.0:1 */
   --color-cat-backend: oklch(0.5 0.13 150);
   --color-cat-react: oklch(0.5 0.085 195); /* sRGB 경계라 채도 제한 */
   --color-cat-typescript: oklch(0.5 0.13 253);
@@ -39,17 +44,21 @@
 
 .dark {
   --color-background: oklch(0.17 0.012 265); /* 순검이 아니라 아주 옅은 남색 */
+  /* 배경보다 밝다. 다크의 깊이는 그림자가 아니라 이 차이가 만든다. */
+  --color-surface: oklch(0.215 0.014 265);
   --color-foreground: oklch(0.98 0.003 247); /* 18.1:1 */
   --color-body: oklch(0.872 0.01 258); /* 13.0:1 */
   --color-muted-foreground: oklch(0.707 0.022 261); /* 7.4:1 */
-  --color-muted: oklch(0.235 0.016 264);
+  --color-muted: oklch(0.25 0.016 264);
   --color-border: oklch(0.3 0.02 262);
+  --color-highlight: oklch(1 0 0 / 0.07);
   --color-accent: oklch(0.98 0.003 247);
   --color-accent-foreground: oklch(0.21 0.034 264);
 
   --color-brand: oklch(0.78 0.13 65); /* 9.3:1 */
   --color-brand-hover: oklch(0.85 0.12 70);
   --color-brand-subtle: oklch(0.3 0.05 65);
+  --color-brand-subtle-foreground: oklch(0.78 0.13 65); /* brand 그대로. 6.7:1 */
   --color-ring: oklch(0.78 0.13 65);
 
   /* 8.9~10.2:1 */
@@ -58,6 +67,25 @@
   --color-cat-typescript: oklch(0.78 0.115 253);
   --color-cat-deep-dive: oklch(0.78 0.13 304);
   --color-cat-tooling: oklch(0.78 0.13 350);
+}
+
+/* 그림자 3단. @theme이 아니라 :root에 두는 이유는 Tailwind의 shadow-* 유틸리티가
+   값을 인라인해서 .dark 오버라이드가 먹지 않을 수 있기 때문이다. 아래
+   .surface-card / .surface-pop에서 var()로만 소비한다. */
+:root {
+  --shadow-card: 0 1px 2px oklch(0.21 0.034 264 / 0.05), 0 1px 1px oklch(0.21 0.034 264 / 0.04);
+  --shadow-card-hover:
+    0 10px 28px -6px oklch(0.21 0.034 264 / 0.14), 0 4px 10px -3px oklch(0.21 0.034 264 / 0.08);
+  --shadow-pop:
+    0 12px 32px -8px oklch(0.21 0.034 264 / 0.18), 0 4px 10px -3px oklch(0.21 0.034 264 / 0.1);
+}
+
+/* 다크에서 그림자는 거의 안 읽힌다. 깊이는 surface 밝기와 상단 하이라이트가 맡고,
+   그림자는 경계를 눌러주는 역할만 한다. */
+.dark {
+  --shadow-card: 0 1px 2px oklch(0 0 0 / 0.3);
+  --shadow-card-hover: 0 12px 32px -8px oklch(0 0 0 / 0.55), 0 4px 12px -4px oklch(0 0 0 / 0.4);
+  --shadow-pop: 0 12px 32px -8px oklch(0 0 0 / 0.6), 0 4px 12px -4px oklch(0 0 0 / 0.45);
 }
 
 html {
@@ -259,4 +287,77 @@ figure[data-rehype-pretty-code-figure] [data-highlighted-line] {
 .category-cover {
   background: color-mix(in oklch, var(--cat) 8%, transparent);
   color: var(--cat);
+}
+
+/* 면(surface)은 배경보다 한 단 위다. 라이트는 흰 면 + 그림자로, 다크는 배경보다
+   밝은 면 + 상단 1px 하이라이트로 띄운다.
+
+   surface-panel = 뜨기만 하는 면 (About 카드처럼 누를 수 없는 것)
+   surface-card  = panel + hover 시 3px 상승 (목록 카드처럼 누를 수 있는 것) */
+.surface-panel,
+.surface-card {
+  position: relative;
+  isolation: isolate;
+  background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+}
+
+/* 상단 하이라이트. 양 끝을 흘려서 둥근 모서리 밖으로 삐져나오지 않게 한다. */
+.surface-panel::before,
+.surface-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 1px auto 1px;
+  height: 1px;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--color-highlight) 18%,
+    var(--color-highlight) 82%,
+    transparent
+  );
+}
+
+.surface-card {
+  transition: transform 220ms cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+/* hover 그림자는 box-shadow를 transition하지 않는다 — 매 프레임 paint가 돈다.
+   미리 깔아두고 opacity만 바꾸면 compositor에서 끝난다. 그래서 이 클래스를 쓰는
+   요소에는 overflow: hidden을 걸면 안 된다. 바깥 그림자를 그리는 ::after가 잘린다.
+   안쪽 이미지는 자기 래퍼에서 각자 자른다. */
+.surface-card::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  border-radius: inherit;
+  box-shadow: var(--shadow-card-hover);
+  opacity: 0;
+  transition: opacity 220ms ease;
+  pointer-events: none;
+}
+
+.surface-card:hover {
+  transform: translateY(-3px);
+}
+
+.surface-card:hover::after {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .surface-card,
+  .surface-card:hover {
+    transform: none;
+    transition: none;
+  }
+}
+
+/* 떠 있는 면. 카드보다 그림자가 강하다. */
+.surface-pop {
+  background: var(--color-surface);
+  box-shadow: var(--shadow-pop);
 }

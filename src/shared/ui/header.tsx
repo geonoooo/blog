@@ -12,7 +12,7 @@ export function Header() {
   const rightItems = siteConfig.nav.filter((item) => !EXCLUDED_FROM_RIGHT.has(item.href));
 
   return (
-    <header className="border-border/60 bg-background/80 sticky top-0 z-50 border-b backdrop-blur">
+    <header className="border-border bg-surface/85 sticky top-0 z-50 border-b backdrop-blur">
       <Container size="wide" className="flex h-14 items-center justify-between">
         <div className="flex items-center gap-6">
           <Link

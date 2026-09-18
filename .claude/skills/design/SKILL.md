@@ -7,7 +7,9 @@ description: 블로그 디자인 시스템. 색 토큰, 타이포 스케일, 레
 
 UI를 만들거나 고치기 전에 이 문서를 확인한다. 여기 없는 값을 쓰고 싶으면 먼저 사용자에게 확인.
 
-레퍼런스는 [컬리 기술 블로그](https://helloworld.kurly.com)다. 본문 18px / 행간 32px / 폭 800px / 푸른 기 있는 회색 — 이 네 가지가 기준선이다.
+읽는 부분의 레퍼런스는 [컬리 기술 블로그](https://helloworld.kurly.com)다. 본문 18px / 행간 32px / 폭 800px / 푸른 기 있는 회색 — 이 네 가지가 기준선이다.
+
+면(surface)을 쌓는 방식은 Linear 쪽을 따른다. 배경보다 밝은 면 + 상단 1px 하이라이트 + 넓고 옅은 그림자. 전부 CSS라 JS 비용이 없다.
 
 ## 1. 색
 
@@ -24,18 +26,25 @@ UI를 만들거나 고치기 전에 이 문서를 확인한다. 여기 없는 �
 
 `chroma 0`(순수 회색)은 "기본값" 인상을 준다. 모든 중립 토큰에 **미세한 푸른 기(hue ~260, chroma 0.003~0.034)** 를 넣는다. 다크 배경도 순검이 아니라 아주 옅은 남색이다.
 
-| 토큰                           | 용도                              | 라이트 대비 |
-| ------------------------------ | --------------------------------- | ----------- |
-| `background`                   | 페이지 바탕                       | —           |
-| `foreground`                   | **제목·UI 텍스트**                | 17.7:1      |
-| `body`                         | **본문 텍스트.** 제목보다 흐리게  | 10.3:1      |
-| `muted-foreground`             | 메타·요약·캡션                    | 4.8:1       |
-| `muted`                        | 옅은 면 (인라인 코드, hover 배경) | —           |
-| `border`                       | 모든 경계선                       | —           |
-| `accent` / `accent-foreground` | 반전 강조 (`::selection`)         | —           |
-| `brand`                        | 강조색 (아래 목록에만)            | 5.1:1       |
-| `brand-subtle`                 | brand의 옅은 배경 (활성 pill)     | —           |
-| `ring`                         | focus-visible 링 (= brand)        | —           |
+**라이트 배경은 순백이 아니다.** `oklch(0.976 0.004 264)`. 순백 배경 위에서는 흰 카드가 아무리 그림자를 얹어도 떠 보이지 않는다. 배경을 한 단 내려야 카드가 면으로 읽힌다.
+
+| 토큰                           | 용도                                 | 라이트 대비 |
+| ------------------------------ | ------------------------------------ | ----------- |
+| `background`                   | 페이지 바탕 (순백 아님)              | —           |
+| `surface`                      | **배경 위의 면.** 카드·헤더·드롭다운 | —           |
+| `foreground`                   | **제목·UI 텍스트**                   | 16.6:1      |
+| `body`                         | **본문 텍스트.** 제목보다 흐리게     | 9.6:1       |
+| `muted-foreground`             | 메타·요약·캡션                       | 4.8:1       |
+| `muted`                        | 옅은 면 (인라인 코드, hover 배경)    | —           |
+| `border`                       | 모든 경계선                          | —           |
+| `highlight`                    | 카드 상단 1px. 라이트에서는 투명     | —           |
+| `accent` / `accent-foreground` | 반전 강조 (`::selection`)            | —           |
+| `brand`                        | 강조색 (아래 목록에만)               | 4.7:1       |
+| `brand-subtle`                 | brand의 옅은 배경 (활성 pill)        | —           |
+| `brand-subtle-foreground`      | 활성 pill의 텍스트                   | 5.8:1       |
+| `ring`                         | focus-visible 링 (= brand)           | —           |
+
+`brand`를 `brand-subtle` 위에 얹으면 4.49:1로 AA에 못 미친다. 활성 pill 텍스트는 반드시 `brand-subtle-foreground`를 쓴다.
 
 **제목과 본문은 같은 색이 아니다.** 본문을 `foreground`로 두면 위계가 안 생긴다. 본문은 `text-body`, 제목은 `text-foreground`.
 
@@ -116,8 +125,9 @@ brand(hue 60) 주변의 따뜻한 영역은 비워둔다.
 - 포스트 상세는 `[1fr, minmax(0,800px), 1fr]` 그리드. **본문은 화면 정중앙**, 목차는 우측 여백에 놓인다. 목차는 `xl`(1280px) 이상에서만.
 - 글 목록은 **2열 카드 그리드**다. `grid gap-x-6 gap-y-10 sm:grid-cols-2`, 카드는 `rounded-xl border border-border` 박스. 목록을 잘라 보여줄 때는 짝수로 끊는다 — 홀수면 마지막 줄에 카드 하나만 남는다.
 - **목록은 루트(`/`) 하나다.** `/posts`·`/categories/*`·`/tags/*`는 [next.config.ts](../../../next.config.ts)에서 루트로 308 리다이렉트된다. 목록 페이지를 따로 만들지 말 것. 글 상세 `/posts/:slug`는 그대로다.
-- 루트는 `lg:grid-cols-[168px_1fr]`로 **왼쪽 카테고리 사이드바 + 오른쪽 목록**. `lg` 미만에서는 사이드바가 가로 칩 줄로 접힌다. 순서는 인트로 → 인기 글 3개 → 사이드바+그리드 → 더 보기.
+- 루트는 `lg:grid-cols-[168px_1fr]`로 **왼쪽 카테고리 사이드바 + 오른쪽 목록**. `lg` 미만에서는 사이드바가 가로 칩 줄로 접힌다. 순서는 헤드라인 → 인기 글 3개 → 사이드바+그리드 → 더 보기.
 - 모바일에서 헤더 nav를 숨기지 않는다. 항목이 2개라 다 들어간다.
+- **소개·GitHub 링크는 헤더와 푸터에만 둔다.** 본문에서 반복하지 않는다. 홈 첫 화면은 헤드라인(`h1`)과 한 문장 설명으로 시작한다 — 메타 한 줄로 시작하면 큰 글자가 없어 위계가 안 생긴다.
 - `line-clamp-*`는 `display: -webkit-box`를 쓴다. 같은 요소에 `block`을 주면 덮여서 안 먹는다.
 
 ## 4. 커버와 썸네일
@@ -166,7 +176,24 @@ cover: "tunnel"
 - 클래스 합성은 `cn()` 하나. variant가 3개 이상이면 `cva`.
 - 아이콘은 `lucide-react`만. `size-3.5`(메타), `size-4`(본문), `size-5`(로고).
 - 모서리: 작은 요소 `rounded-md`, 카드·이미지·코드 `rounded-xl`, pill `rounded-full`.
-- 그림자는 드롭다운에만. 카드는 경계선으로 구분한다.
+
+### 면과 깊이
+
+깊이는 배경보다 밝은 면으로 만든다. 그림자는 그 면을 거들 뿐이다. 다크에서 그림자는 거의 안 읽히므로, 다크의 깊이는 전적으로 `surface` 밝기와 상단 1px 하이라이트가 만든다.
+
+[globals.css](../../../src/app/globals.css)에 클래스 세 개가 있다. 직접 `shadow-*`를 쓰지 않는다.
+
+| 클래스          | 용도                                        |
+| --------------- | ------------------------------------------- |
+| `surface-panel` | 누를 수 없는 면 (About 카드)                |
+| `surface-card`  | panel + hover 시 3px 상승 (목록 카드)       |
+| `surface-pop`   | 떠 있는 면 (드롭다운). 그림자가 가장 강하다 |
+
+그림자 스케일은 `--shadow-card` / `--shadow-card-hover` / `--shadow-pop` 3단. `@theme`이 아니라 `:root`에 둔다 — Tailwind의 `shadow-*` 유틸리티는 값을 인라인해서 `.dark` 오버라이드가 먹지 않을 수 있다.
+
+**`surface-card`에는 `overflow: hidden`을 걸지 않는다.** hover 그림자를 그리는 `::after`가 잘린다. 안쪽 이미지는 자기 래퍼에서 `rounded-t-xl overflow-hidden`으로 각자 자른다.
+
+hover 그림자는 `box-shadow`를 transition하지 않는다. 매 프레임 paint가 돈다. 미리 깔아두고 `opacity`만 바꾼다. 애니메이션하는 속성은 `transform`과 `opacity`뿐이다.
 
 ## 6. 인터랙션
 
@@ -187,8 +214,10 @@ cover: "tunnel"
 ## 체크리스트
 
 1. 하드코딩된 색이 없는가 (`grep -rn "amber\|blue-\|gray-\|#[0-9a-f]\{6\}" src/`)
-2. 본문은 `text-body`, 제목은 `text-foreground`인가
-3. 라이트/다크 양쪽에서 확인했는가
-4. 모바일(390px)에서 한국어 줄바꿈이 어절 단위인가
-5. Tab으로 포커스 링이 보이는가
-6. `pnpm exec tsc --noEmit` / `pnpm lint` / `pnpm build` 통과
+2. 색 토큰을 바꿨다면 **라이트/다크 양쪽에서 대비를 다시 계산했는가.** 눈으로 정하지 않는다. 배경을 건드리면 그 위의 모든 텍스트 토큰이 영향을 받는다
+3. 카드에 `surface-card`를 썼다면 그 요소에 `overflow-hidden`이 없는가
+4. 본문은 `text-body`, 제목은 `text-foreground`인가
+5. 라이트/다크 양쪽에서 확인했는가
+6. 모바일(390px)에서 한국어 줄바꿈이 어절 단위인가
+7. Tab으로 포커스 링이 보이는가
+8. `pnpm exec tsc --noEmit` / `pnpm lint` / `pnpm build` 통과

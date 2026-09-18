@@ -12,8 +12,8 @@ interface PostCardProps {
 
 export function PostCard({ post, views }: PostCardProps) {
   return (
-    <article className="group border-border hover:border-muted-foreground/40 relative flex h-full flex-col overflow-hidden rounded-xl border transition-colors">
-      <div className="aspect-video overflow-hidden">
+    <article className="surface-card group border-border relative flex h-full flex-col rounded-xl border">
+      <div className="aspect-video overflow-hidden rounded-t-xl">
         <PostCoverArt
           category={post.category}
           cover={post.cover}
@@ -27,7 +27,7 @@ export function PostCard({ post, views }: PostCardProps) {
 
         <Link
           href={post.permalink}
-          className="focus-visible:ring-ring focus-visible:ring-offset-background rounded-sm focus-visible:ring-2 focus-visible:ring-offset-4 focus-visible:outline-none"
+          className="focus-visible:ring-ring focus-visible:ring-offset-surface rounded-sm focus-visible:ring-2 focus-visible:ring-offset-4 focus-visible:outline-none"
         >
           <span className="absolute inset-0" aria-hidden />
           <h2 className="group-hover:text-brand mt-3 text-xl leading-snug font-bold tracking-tight transition-colors">

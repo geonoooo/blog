@@ -37,15 +37,15 @@ export function PopularPosts({ posts, views, className }: PopularPostsProps) {
       <ol className="mt-4 grid gap-x-6 gap-y-8 sm:grid-cols-3">
         {top.map(({ post, count }, index) => (
           <li key={post.slug}>
-            <article className="group border-border hover:border-muted-foreground/40 relative flex h-full flex-col overflow-hidden rounded-xl border transition-colors">
-              <div className="relative aspect-video overflow-hidden">
+            <article className="surface-card group border-border relative flex h-full flex-col rounded-xl border">
+              <div className="relative aspect-video overflow-hidden rounded-t-xl">
                 <PostCoverArt
                   category={post.category}
                   cover={post.cover}
                   className="h-full w-full transition-transform duration-300 group-hover:scale-[1.04]"
                 />
                 <span
-                  className="bg-background/85 text-foreground absolute top-2 left-2 flex size-6 items-center justify-center rounded-full text-xs font-bold tabular-nums backdrop-blur"
+                  className="bg-surface/85 text-foreground absolute top-2 left-2 flex size-6 items-center justify-center rounded-full text-xs font-bold tabular-nums backdrop-blur"
                   aria-hidden
                 >
                   {index + 1}
@@ -55,7 +55,7 @@ export function PopularPosts({ posts, views, className }: PopularPostsProps) {
               <div className="flex flex-1 flex-col p-4">
                 <Link
                   href={post.permalink}
-                  className="focus-visible:ring-ring focus-visible:ring-offset-background rounded-sm focus-visible:ring-2 focus-visible:ring-offset-4 focus-visible:outline-none"
+                  className="focus-visible:ring-ring focus-visible:ring-offset-surface rounded-sm focus-visible:ring-2 focus-visible:ring-offset-4 focus-visible:outline-none"
                 >
                   <span className="absolute inset-0" aria-hidden />
                   <h3 className="group-hover:text-brand line-clamp-2 text-[15px] leading-snug font-bold tracking-tight transition-colors">
