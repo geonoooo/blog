@@ -97,7 +97,6 @@ brand(hue 60) 주변의 따뜻한 영역은 비워둔다.
 | 역할           | 클래스                                                               |
 | -------------- | -------------------------------------------------------------------- |
 | 글 제목 (h1)   | `text-[32px] sm:text-[40px] font-bold tracking-tight leading-[1.25]` |
-| 홈 헤드라인    | `text-[28px] sm:text-[32px] font-bold tracking-tight`                |
 | 카드 제목      | `text-xl font-bold tracking-tight leading-snug`                      |
 | 글 요약 (상세) | `text-lg text-muted-foreground`                                      |
 | 카드 요약      | `text-[15px] text-muted-foreground line-clamp-2`                     |
@@ -125,9 +124,9 @@ brand(hue 60) 주변의 따뜻한 영역은 비워둔다.
 - 포스트 상세는 `[1fr, minmax(0,800px), 1fr]` 그리드. **본문은 화면 정중앙**, 목차는 우측 여백에 놓인다. 목차는 `xl`(1280px) 이상에서만.
 - 글 목록은 **2열 카드 그리드**다. `grid gap-x-6 gap-y-10 sm:grid-cols-2`, 카드는 `rounded-xl border border-border` 박스. 목록을 잘라 보여줄 때는 짝수로 끊는다 — 홀수면 마지막 줄에 카드 하나만 남는다.
 - **목록은 루트(`/`) 하나다.** `/posts`·`/categories/*`·`/tags/*`는 [next.config.ts](../../../next.config.ts)에서 루트로 308 리다이렉트된다. 목록 페이지를 따로 만들지 말 것. 글 상세 `/posts/:slug`는 그대로다.
-- 루트는 `lg:grid-cols-[168px_1fr]`로 **왼쪽 카테고리 사이드바 + 오른쪽 목록**. `lg` 미만에서는 사이드바가 가로 칩 줄로 접힌다. 순서는 헤드라인 → 인기 글 3개 → 사이드바+그리드 → 더 보기.
+- 루트는 `lg:grid-cols-[168px_1fr]`로 **왼쪽 카테고리 사이드바 + 오른쪽 목록**. `lg` 미만에서는 사이드바가 가로 칩 줄로 접힌다. 순서는 한 줄 설명 → 인기 글 3개 → 사이드바+그리드 → 더 보기.
 - 모바일에서 헤더 nav를 숨기지 않는다. 항목이 2개라 다 들어간다.
-- **소개·GitHub 링크는 헤더와 푸터에만 둔다.** 본문에서 반복하지 않는다. 홈 첫 화면은 헤드라인(`h1`)과 한 문장 설명으로 시작한다 — 메타 한 줄로 시작하면 큰 글자가 없어 위계가 안 생긴다.
+- **홈 본문은 한 줄 설명으로 시작한다** (`text-[15px] text-muted-foreground`). 소개·GitHub 링크는 헤더와 푸터에만 두고 여기서 반복하지 않는다. meta description은 검색 스니펫용이라 더 길다 — 두 문자열은 일부러 다르다. 홈에 `h1`은 없다.
 - `line-clamp-*`는 `display: -webkit-box`를 쓴다. 같은 요소에 `block`을 주면 덮여서 안 먹는다.
 
 ## 4. 커버와 썸네일
