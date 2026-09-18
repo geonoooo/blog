@@ -1,5 +1,5 @@
-import type { Metadata } from "next";
-import { geist, pretendard, siteConfig } from "@/shared/config";
+import type { Metadata, Viewport } from "next";
+import { geist, pretendard, sacramento, siteConfig } from "@/shared/config";
 import { ThemeProvider, ThemeScript } from "@/shared/providers";
 import { Footer, Header, JsonLd, PageTransition } from "@/shared/ui";
 import "./globals.css";
@@ -51,6 +51,16 @@ export const metadata: Metadata = {
   },
 };
 
+// 모바일 브라우저 주소창 색. 브랜드 paper/ink 값이다.
+// 주의: theme-color는 CSS 클래스를 못 읽으므로 OS 설정(prefers-color-scheme)만 따른다.
+// 사이트 안에서 테마를 수동 토글해도 주소창 색은 안 바뀐다.
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F4F4F2" },
+    { media: "(prefers-color-scheme: dark)", color: "#111111" },
+  ],
+};
+
 const websiteJsonLd = {
   "@context": "https://schema.org",
   "@type": "WebSite",
@@ -62,6 +72,8 @@ const websiteJsonLd = {
     "@type": "Person",
     name: siteConfig.author.name,
     url: siteConfig.url,
+    // Person에는 Organization의 logo 대신 image를 쓴다. 검색 결과에서 쓰일 수 있다.
+    image: `${siteConfig.url}${siteConfig.markPath}`,
   },
 };
 
@@ -69,7 +81,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html
       lang="ko"
-      className={`${pretendard.variable} ${geist.variable} h-full antialiased`}
+      className={`${pretendard.variable} ${geist.variable} ${sacramento.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <body className="flex min-h-full flex-col" suppressHydrationWarning>

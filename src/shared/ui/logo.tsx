@@ -1,23 +1,15 @@
-import { ChevronLeft, ChevronRight, Pencil } from "lucide-react";
 import { siteConfig } from "@/shared/config";
 import { cn } from "@/shared/lib";
 
 type LogoProps = {
   className?: string;
-  showWordmark?: boolean;
 };
 
-export function Logo({ className, showWordmark = true }: LogoProps) {
+/* 워드마크는 이미지가 아니라 텍스트다 — 선택·검색·스크린리더가 다 된다.
+   leading-none이 필수다. Sacramento는 기본 행간이 커서 안 누르면 헤더에 빈 공간이 생긴다.
+   색은 currentColor라 감싸는 링크의 hover를 그대로 따라간다. */
+export function Logo({ className }: LogoProps) {
   return (
-    <span className={cn("inline-flex items-center gap-2", className)} aria-label={siteConfig.name}>
-      <span aria-hidden className="text-brand inline-flex items-center">
-        <ChevronLeft className="h-5 w-5" strokeWidth={2.75} />
-        <Pencil className="-mx-0.5 h-4 w-4" strokeWidth={2} />
-        <ChevronRight className="h-5 w-5" strokeWidth={2.75} />
-      </span>
-      {showWordmark && (
-        <span className="text-[17px] font-semibold tracking-tight">{siteConfig.name}</span>
-      )}
-    </span>
+    <span className={cn("font-script text-[34px] leading-none", className)}>{siteConfig.name}</span>
   );
 }

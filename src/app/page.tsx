@@ -61,9 +61,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       <JsonLd data={blogJsonLd} />
       {/* 이 블로그에 뭐가 있는지 한 줄. 소개·GitHub 링크는 헤더와 푸터에 있으므로
           여기서 반복하지 않는다. meta description은 검색 스니펫용이라 더 길다. */}
-      <p className="text-muted-foreground max-w-[60ch] text-[15px]">
-        프론트엔드부터 네트워크·DB까지, 개발하면서 겪은 문제를 측정하고 정리합니다.
-      </p>
+      <p className="text-muted-foreground max-w-[60ch] text-[15px]">{siteConfig.tagline}</p>
 
       {/* 인기 글은 필터·정렬과 무관하게 전체 기준으로 고정한다. */}
       <PopularPosts posts={posts} views={views} className="border-border mt-8 border-b pb-10" />

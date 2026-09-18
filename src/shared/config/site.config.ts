@@ -24,6 +24,10 @@ export const siteConfig = {
   title: `${AUTHOR_HANDLE}.dev`,
   description:
     "프론트엔드 개발하면서 실제로 밟은 문제를 측정하고 정리합니다. React, Next.js, Vite부터 네트워크·DB까지 직접 겪은 기록.",
+  // OG 이미지용 한 문장. description은 두 문장이라 60px로 깔면 넘친다.
+  tagline: "프론트엔드부터 네트워크·DB까지, 개발하면서 겪은 문제를 측정하고 정리합니다.",
+  // 브랜드 마크. RSS 채널 이미지·JSON-LD처럼 절대 URL이 필요한 곳에서 url과 조합한다.
+  markPath: "/icon-512.png",
   url: getSiteUrl(),
   author: {
     name: AUTHOR_HANDLE,
