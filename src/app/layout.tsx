@@ -34,10 +34,7 @@ export const metadata: Metadata = {
     },
   },
   verification: {
-    google: siteConfig.verification.google,
-    other: siteConfig.verification.naver
-      ? { "naver-site-verification": siteConfig.verification.naver }
-      : {},
+    other: { "naver-site-verification": siteConfig.verification.naver },
   },
   openGraph: {
     type: "website",
