@@ -1,5 +1,5 @@
 ---
-title: "블로그 조회수 하나 넣는데 DB까지 필요할까?"
+title: "블로그 조회수 하나 넣는데 Supabase까지 필요할까?"
 summary: "Hits, Upstash Redis, Supabase를 놓고 비교했습니다. 카운터 하나만 보면 Upstash가 맞지만, 댓글과 글별 조회수까지 붙일 계획이라 Supabase를 골랐습니다."
 date: 2026-04-27
 category: "deep-dive"
@@ -43,7 +43,7 @@ draft: false
 
 그래서 처음부터 **Postgres 한 곳으로 모으는** 쪽을 골랐습니다.
 
-DB 종류가 왜 나뉘고 무엇을 기준으로 고르는지는 나중에 [SQL vs NoSQL보다 PostgreSQL을 먼저 본 이유](/posts/sql-vs-nosql-how-to-choose)에 따로 정리했습니다.
+DB 종류가 왜 나뉘고 무엇을 기준으로 고르는지는 나중에 [SQL vs NoSQL, 내 프로젝트에는 뭘 써야 할까?](/posts/sql-vs-nosql-how-to-choose)에 따로 정리했습니다.
 
 다른 이유 하나는 **Next.js + Vercel + Supabase 조합이 사실상 표준 레퍼런스**라는 점이었습니다. SDK도 잘 되어 있고, 환경변수만 잘 꽂으면 끝이라 헤맬 일이 적었습니다.
 

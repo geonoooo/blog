@@ -1,5 +1,5 @@
 ---
-title: "액세스 토큰을 어떻게 메모리에서 관리할까"
+title: "액세스 토큰을 메모리에 저장하면 새로고침은?"
 summary: "localStorage는 XSS에 취약해서 액세스 토큰을 메모리 변수에 뒀습니다. 그랬더니 새로고침할 때마다 토큰이 날라가버렸습니다..."
 date: 2026-09-08
 category: "deep-dive"
@@ -26,7 +26,7 @@ JS 힙에만 있으니 `localStorage`를 훑는 스크립트로는 못 가져갑
 > [!NOTE] 환경
 > React 19 + TanStack Router/Query, `fetch`를 직접 감싼 클라이언트. 백엔드는 FastAPI. access 토큰 30분, refresh 쿠키 12시간입니다.
 
-이 글은 로그인한 뒤의 세션 유지만 다룹니다. 그 앞 단계인 회원가입 이메일 인증은 [NestJS 이메일 인증을 구현하다가 SMTP 포트까지 파고들었다](/posts/email-verification-code-and-smtp)에 적었습니다.
+이 글은 로그인한 뒤의 세션 유지만 다룹니다. 그 앞 단계인 회원가입 이메일 인증은 [NestJS 이메일 인증, SMTP 포트는 뭘 써야 할까?](/posts/email-verification-code-and-smtp)에 적었습니다.
 
 ## 전제 — refresh 토큰은 JS가 읽을 수 없다
 
