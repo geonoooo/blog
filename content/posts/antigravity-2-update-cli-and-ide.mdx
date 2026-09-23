@@ -1,9 +1,9 @@
 ---
-title: "Antigravity 2.0 업데이트 후 agy 명령이 IDE를 안 여는 이유"
+title: "Antigravity 2.0 업데이트 후 agy 명령으로 IDE가 안 열리는 이유"
 summary: "Antigravity 2.0 이후 agy . 을 실행하면 에디터 대신 CLI가 켜집니다. 명령어가 CLI와 IDE로 분리된 것이 원인이고, 원래대로 에디터를 여는 방법까지 정리했습니다."
 date: 2026-05-22
 category: "tooling"
-tags: ["antigravity", "cli", "ide", "troubleshooting"]
+tags: ["antigravity", "안티그래비티", "cli", "ide", "troubleshooting"]
 cover: "terminal"
 draft: false
 ---
@@ -16,6 +16,8 @@ draft: false
 
 ---
 
+Antigravity는 구글이 2025년 11월 공개한 에이전트 중심 IDE입니다. VS Code를 포크해서 만들었고, 그래서 기존 확장·테마·키바인딩이 그대로 붙습니다. Gemini 3를 기본 모델로 쓰고, 화면은 직접 코드를 만지는 에디터 뷰와 에이전트를 여러 개 동시에 돌리는 매니저 뷰로 나뉩니다. 이 글은 그중 2.0 업데이트로 바뀐 터미널 명령어 부분만 다룹니다.
+
 ## 1. 발생한 현상
 
 프로젝트 디렉토리에서 원래 사용하던 대로 `agy .`를 실행했으나, 익숙한 IDE(GUI) 창이 열리지 않고 터미널 기반 CLI 세션이 실행되거나 폴더 선택 창으로 튕기는 현상이 발생합니다.
@@ -24,7 +26,7 @@ draft: false
 
 ## 2. 원인 분석
 
-Antigravity 2.0 업데이트로 인해 독립형 IDE와 코어 Antigravity 플랫폼이 서로 다른 제품으로 분리되었습니다. 이에 따라 터미널 명령어 체계 또한 변경되었습니다.
+Antigravity는 제품과 문서가 Antigravity 2.0 / CLI / IDE / Extensions / SDK로 나뉘어 있습니다. CLI와 IDE는 설치 경로도 실행 파일도 별개고, 터미널 명령어 체계가 여기에 맞춰져 있습니다.
 
 - **이전**: `agy` 명령어가 `/Applications/Antigravity.app`의 실행 스크립트를 가리켰기에 `agy .`만으로 IDE 실행이 가능했습니다.
 - **현재**: `agy`는 1.0.0 버전으로 정식 릴리즈된 에이전트 CLI 바이너리입니다. IDE GUI 창을 띄우려면 새 명령어인 `agy-ide`를 호출해야 합니다.
@@ -52,3 +54,15 @@ alias agi="agy-ide ."
 ```
 
 설정 반영 후 터미널에 `agi`만 입력하면 현재 디렉토리가 로드된 IDE GUI 창이 바로 열립니다.
+
+---
+
+## 4. 참고
+
+- [Antigravity 공식 사이트](https://antigravity.google/) — 제품이 Antigravity 2.0 / CLI / IDE / Extensions / SDK로 나뉘어 있습니다.
+- [Antigravity CLI — 설치와 인증](https://antigravity.google/docs/cli/install/) — `agy` 바이너리를 `~/.local/bin/agy`에 설치한다고 공식 문서에 적혀 있습니다.
+- [Antigravity CLI 개요](https://antigravity.google/docs/cli/overview/)
+- [Antigravity IDE 개요](https://antigravity.google/docs/ide/overview/) — CLI와 IDE는 문서가 처음부터 나뉘어 있습니다.
+- [Antigravity 변경 이력](https://antigravity.google/changelog/) — 설치된 버전과 릴리즈 날짜 확인용.
+
+`agy-ide`는 공식 문서에 나오지 않습니다. IDE를 설치하면 `~/.antigravity-ide/antigravity-ide/bin/agy-ide`가 앱 안의 실행 파일로 심볼릭 링크되고 PATH에 추가되지만, 문서 어디에도 이 명령 이름이 없습니다. 검색으로 안 나오는 이유가 여기 있습니다.
