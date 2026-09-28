@@ -1,0 +1,363 @@
+---
+title: "props가 바뀌었는데 useState는 왜 그대로일까?"
+summary: "useState의 초기값은 첫 렌더에서만 쓰이고, 같은 자리의 같은 컴포넌트는 리렌더될 뿐 마운트되지 않습니다. prop을 state 초기값으로 넘긴 코드가 왜 깨지는지, Fiber가 언제 재사용되는지, 클릭 한 번 동안 React와 브라우저가 어떤 순서로 움직이는지 정리합니다."
+date: 2026-09-23
+category: "react"
+tags: ["react", "usestate", "rendering", "fiber", "useeffect"]
+cover: "counter"
+draft: false
+---
+
+면접에서 React가 리렌더되는 조건을 말해보라는 질문을 받은 적이 있습니다. 그때는 "state가 바뀔 때, props가 바뀔 때"라고 답했습니다. 아주 틀린 말은 아닙니다. 다만 이 답으로는 아래 같은 버그를 설명하지 못합니다.
+
+특히 "props가 바뀌면 리렌더된다"는 말이 애매합니다. 일반 컴포넌트는 props가 바뀌었는지 먼저 비교한 뒤 실행되지 않습니다. 부모가 다시 렌더되면 부모가 만든 자식 엘리먼트도 다시 계산되고, React는 그 자리에 있는 자식 컴포넌트 함수를 다시 호출합니다. 이전 props와 다음 props를 비교해서 건너뛰는 일은 `memo`로 감쌌을 때 들어갑니다.
+
+더 중요한 점은 따로 있습니다. **리렌더된다고 컴포넌트가 처음부터 다시 시작하지는 않습니다.** 함수는 다시 실행됩니다. 하지만 같은 자리에 같은 컴포넌트가 남아 있으면 기존 state를 그대로 들고 이어갑니다. 그래서 새 props가 들어와도 `useState(initialValue)`의 state가 자동으로 바뀌지 않습니다.
+
+아래는 목록에서 팀원을 하나 고르고 그 사람의 이메일을 수정하는 화면입니다. 겉보기에는 단순하지만 제대로 동작하지 않습니다.
+
+```jsx
+import { useState } from "react";
+
+const members = [
+  { id: 1, name: "김선우", email: "sunwoo@example.com" },
+  { id: 2, name: "박하늘", email: "haneul@example.com" },
+];
+
+export default function MemberEmailPage() {
+  const [selectedMemberId, setSelectedMemberId] = useState(members[0].id);
+  const selectedMember = members.find((member) => member.id === selectedMemberId);
+
+  return (
+    <div>
+      {members.map((member) => (
+        <button
+          key={member.id}
+          type="button"
+          aria-pressed={member.id === selectedMemberId}
+          onClick={() => setSelectedMemberId(member.id)}
+        >
+          {member.name}
+        </button>
+      ))}
+      <EmailForm initialEmail={selectedMember.email} />
+    </div>
+  );
+}
+
+function EmailForm({ initialEmail }) {
+  const [email, setEmail] = useState(initialEmail);
+
+  return (
+    <div>
+      <label htmlFor="member-email">이메일</label>
+      <input
+        id="member-email"
+        type="email"
+        value={email}
+        onChange={(event) => setEmail(event.target.value)}
+      />
+      <button type="button" onClick={() => alert(email)}>
+        저장
+      </button>
+    </div>
+  );
+}
+```
+
+## 증상
+
+김선우가 선택된 상태에서 박하늘 버튼을 누릅니다. 버튼의 `aria-pressed`는 박하늘 쪽으로 옮겨갑니다. `input`의 값은 `sunwoo@example.com` 그대로입니다. 저장을 누르면 박하늘 화면에서 김선우의 이메일이 `alert`됩니다.
+
+콘솔에 에러는 없습니다. 버튼은 눌린 대로 반응합니다. 화면 일부가 바뀌니까 렌더는 된 것처럼 보이고, 그래서 `onChange`나 `value` 쪽을 뒤지게 됩니다. 원인은 그쪽이 아닙니다.
+
+문제는 `useState(initialEmail)`입니다. 따져볼 건 두 가지입니다. `useState`의 인자가 언제 쓰이는지, 그리고 이 컴포넌트가 언제 새로 만들어지는지.
+
+## 클릭하면 실제로 벌어지는 일
+
+흔한 대처부터 봅니다. prop이 바뀔 때 state를 맞춰주면 된다고 생각해서 `useEffect`를 넣는 경우입니다.
+
+```jsx
+useEffect(() => {
+  setEmail(initialEmail);
+}, [initialEmail]);
+```
+
+동작은 합니다. 다만 클릭 한 번에 브라우저가 화면을 두 번 그립니다.
+
+```yaml
+User:     click
+React:              [render]  [commit]            [effect]  [render]  [commit]
+Browser:                                [paint]                                 [paint]
+Screen:                                  OLD                                     NEW
+```
+
+`paint`가 두 번 있고, 첫 번째는 틀린 값입니다. 박하늘을 눌렀는데 김선우의 이메일이 실제로 한 프레임 그려집니다.
+
+이유는 순서입니다. React는 `render → commit`으로 DOM을 바꾸고, 브라우저는 그 DOM을 화면에 그립니다. `useEffect`는 그 뒤에 실행됩니다. 그래서 effect에서 `setEmail`을 호출하면 첫 화면 반영이 끝난 뒤에 두 번째 업데이트가 시작됩니다.
+
+이제 봐야 할 것은 두 가지입니다. 왜 `email`이 새 prop을 바로 따라오지 않는지. 그리고 이 두 번의 화면 반영을 한 번으로 줄일 수 있는지.
+
+## React render는 paint가 아니다
+
+여기서 "렌더"라는 말이 헷갈립니다. React가 말하는 render와 브라우저가 화면을 그리는 paint는 다른 일입니다.
+
+React의 render는 화면에 픽셀을 찍는 단계가 아닙니다. 컴포넌트 함수를 호출해서 다음 UI가 어떤 모양이어야 하는지 계산하는 단계입니다. 이때 JSX가 React 엘리먼트로 계산되고, 이전 Fiber 트리와 비교됩니다. DOM은 아직 바뀌지 않습니다.
+
+React의 commit은 계산 결과를 실제 DOM에 반영하는 단계입니다. `input.value`를 바꾸거나 노드를 추가·삭제하거나 ref를 연결하는 일이 여기서 일어납니다. `useLayoutEffect`도 이 구간에 동기 실행됩니다.
+
+브라우저의 paint는 그다음 일입니다. DOM이 바뀌었다고 사용자가 바로 본다는 뜻은 아닙니다. 브라우저는 메인 스레드가 비고 렌더링 기회가 왔을 때 style, layout, paint, composite 과정을 거쳐 화면을 갱신합니다. `useEffect`는 이 화면 반영 이후에 실행되는 passive effect입니다.
+
+박하늘 버튼을 누르면 순서는 이렇습니다.
+
+```yaml
+1_event: 사용자가 박하늘 버튼을 클릭한다.
+2_update: setSelectedMemberId(2)가 업데이트를 예약한다.
+3_react_render: MemberEmailPage와 EmailForm 함수가 다시 실행된다.
+4_reconcile: EmailForm의 위치와 타입이 같다고 판단해 기존 Fiber를 재사용한다.
+5_state_read: EmailForm의 email state는 기존 Hook 슬롯에서 읽는다.
+6_commit: aria-pressed 같은 DOM 변경만 반영된다. input value는 기존 email이다.
+7_browser: 브라우저가 현재 DOM을 그린다.
+8_effect: useEffect가 initialEmail 변경을 보고 setEmail을 호출한다.
+9_second_pass: React가 다시 render와 commit을 수행한다.
+10_browser: 브라우저가 수정된 input value를 다시 그린다.
+```
+
+같은 흐름을 레인으로 줄이면 이렇습니다.
+
+```yaml
+User: click
+JS event: setSelectedMemberId
+React: render        commit          effect        render        commit
+Fiber: reuse old EmailForm fiber      keep state                  update state
+DOM: aria-pressed 변경             input value 변경
+Browser: paint                       paint
+Screen: OLD                         NEW
+```
+
+여기서 OLD는 React가 일을 안 했다는 뜻이 아닙니다. React는 렌더와 커밋을 했습니다. 다만 첫 커밋에서 `email` state가 아직 예전 값이었고, 브라우저는 그 시점의 DOM을 그대로 그렸습니다.
+
+## 리렌더가 시작되는 경우
+
+면접 답으로는 "state나 props가 바뀔 때"라고 줄여 말할 수 있습니다. 하지만 디버깅할 때는 아래처럼 나눠 보는 편이 낫습니다.
+
+| 상황                     | 실제로 일어나는 일                                                     | state 유지 여부              |
+| ------------------------ | ---------------------------------------------------------------------- | ---------------------------- |
+| 자신의 state 업데이트    | 해당 컴포넌트부터 새 render 작업이 시작된다                            | 유지                         |
+| 부모가 리렌더됨          | 자식 엘리먼트도 다시 계산되고, 일반 자식 컴포넌트 함수가 다시 호출된다 | 같은 위치·같은 타입이면 유지 |
+| Context 값 변경          | 그 Context를 읽는 컴포넌트가 다시 렌더된다                             | 유지                         |
+| 외부 스토어 구독 값 변경 | `useSyncExternalStore` 같은 구독 훅이 업데이트를 예약한다              | 유지                         |
+| `key` 변경               | 같은 위치라도 다른 인스턴스로 판단해 Fiber를 새로 만든다               | 리셋                         |
+| 엘리먼트 타입 변경       | 이전 Fiber를 버리고 새 Fiber를 만든다                                  | 리셋                         |
+| 부모 트리에서 제거됨     | Fiber가 언마운트된다                                                   | 사라짐                       |
+| `memo` 비교가 통과함     | 부모가 렌더되어도 자식 함수 호출을 건너뛴다                            | 유지                         |
+
+이 글의 버그는 두 번째 줄에 있습니다. 부모인 `MemberEmailPage`는 `selectedMemberId` state가 바뀌어서 다시 렌더됩니다. 그래서 `EmailForm`도 새 `initialEmail` prop을 받습니다. 하지만 `EmailForm`은 같은 부모의 같은 자리에 있고 타입도 같습니다. React는 이 컴포넌트를 새로 시작하지 않고 기존 Fiber를 재사용합니다. 그래서 `useState(initialEmail)`의 `initialEmail`은 다시 평가되지만, state 초기값으로 다시 쓰이지는 않습니다.
+
+## useState의 인자는 첫 렌더에서만 쓰인다
+
+React 내부에는 훅 구현이 두 벌 있습니다. 첫 렌더용과 그 이후용입니다. 렌더 직전에 어느 쪽을 쓸지 교체합니다. 단순화하면 이렇습니다.
+
+```js
+// 첫 렌더
+function mountState(initialState) {
+  const hook = mountWorkInProgressHook();
+  if (typeof initialState === "function") initialState = initialState();
+  hook.memoizedState = initialState; // 인자를 여기서 한 번 쓴다
+  // ...
+}
+
+// 이후 모든 렌더
+function updateState(initialState) {
+  return updateReducer(basicStateReducer, initialState);
+  // initialState는 시그니처에만 있고 실제로는 쓰이지 않는다.
+  // 저장된 memoizedState에 그동안 쌓인 업데이트를 적용해 반환한다.
+}
+```
+
+`updateState`는 인자를 받기만 하고 쓰지 않습니다. 두 번째 렌더부터는 `useState(initialEmail)`에 무엇을 넣어도 결과가 같습니다.
+
+여기서 두 가지를 조심해야 합니다.
+
+**인자 표현식 자체는 매 렌더 평가됩니다.** JS는 함수를 호출하기 전에 인자를 먼저 계산합니다. React가 그 값을 버리는 것과는 별개입니다.
+
+```js
+useState(buildDefaultForm()); // 매 렌더 실행. 결과는 첫 렌더 빼고 전부 버려진다
+useState(buildDefaultForm); // 함수를 넘기면 첫 렌더에서만 호출된다
+```
+
+**prop을 state 초기값으로 넘기면 값이 복사됩니다.** `initialEmail`과 `email`은 그 시점 이후 독립적으로 움직입니다. 이름에 `initial`이 붙은 prop은 대부분 이 구조라는 신호입니다.
+
+그럼 저장된 `memoizedState`는 어디에 있을까. 여기서 Fiber를 봐야 합니다.
+
+## state는 Fiber에 붙어 있다
+
+React는 컴포넌트 하나마다 Fiber라는 객체를 하나씩 들고 있습니다. 그 컴포넌트에 대해 React가 기억해야 하는 정보가 여기에 들어갑니다. 타입, 받은 props, 연결된 DOM 노드, 부모·자식·형제를 가리키는 포인터, 그리고 훅의 state입니다.
+
+```js
+{
+  type: EmailForm,       // 컴포넌트 함수 그 자체
+  key: null,
+  stateNode: null,       // host 컴포넌트라면 실제 DOM 노드가 들어간다
+  return: parentFiber,   // 부모
+  child: firstChild,
+  sibling: nextSibling,
+  memoizedProps: { initialEmail: "sunwoo@example.com" },
+  memoizedState: hook,   // 함수 컴포넌트에서는 훅 목록의 첫 번째
+  alternate: previousFiber,
+  flags: Update,         // 커밋 때 무엇을 할지
+}
+```
+
+이 구조가 React 16에서 도입된 이유는 트리 순회를 중단 가능하게 만들기 위해서입니다. 재귀 호출로 트리를 내려가면 스택이 다 풀릴 때까지 멈출 수 없습니다. 부모·자식·형제를 포인터로 들고 있으면 어디까지 갔는지를 객체에 적어둘 수 있고, 중간에 브라우저에 제어권을 넘겼다가 돌아올 수 있습니다. 이름이 Fiber인 것도 "쪼갤 수 있는 작업 단위"라는 뜻입니다.
+
+React는 이 트리를 두 벌 유지합니다. 화면에 반영된 `current` 트리와 작업 중인 `workInProgress` 트리이고, 짝이 되는 노드끼리 `alternate`로 서로를 가리킵니다. 커밋 시점에 루트 포인터를 바꿔 작업 트리를 현재 트리로 승격합니다. 렌더 도중 작업을 버려도 화면에 반영된 쪽은 멀쩡한 이유입니다.
+
+훅의 state는 `memoizedState`에 붙습니다. 함수 컴포넌트에서 이 필드는 훅 객체들의 연결 리스트입니다.
+
+```js
+Fiber(EmailForm)
+  └─ memoizedState ──> Hook { memoizedState: "sunwoo@example.com", queue, next }
+                              └─ next ──> Hook { ... }   // 두 번째 useState
+```
+
+React는 이름이나 변수가 아니라 **호출 순서**로 이 슬롯을 찾습니다. 조건문 안에서 훅을 호출하면 안 되는 이유가 이것입니다. 순서가 밀리면 다른 훅의 값을 읽습니다.
+
+여기서 핵심이 나옵니다. **state가 살아 있다는 말은 그 Fiber가 재사용됐다는 말입니다.** 반대로 Fiber가 버려지면 훅 목록도 같이 사라집니다. 새로 만들어진 Fiber에는 훅 목록이 없으니 `mountState` 경로를 타고, 그러면 `useState`의 인자가 다시 쓰입니다.
+
+그러면 Fiber는 언제 재사용되고, 언제 버려질까.
+
+## 같은 자리, 같은 타입이면 state는 남는다
+
+React는 리렌더할 때 이전 트리와 새 트리를 비교해 같은 것으로 판단되면 Fiber를 재사용하고, 다른 것으로 판단되면 이전 Fiber를 버리고 새로 만듭니다. 판단 기준은 두 가지뿐입니다. **같은 부모 안에서의 위치**와 **엘리먼트 타입**입니다. DOM 상의 위치가 아니라 렌더된 JSX 트리 상의 위치입니다.
+
+문제의 코드에서 `<EmailForm />`은 `MemberEmailPage`가 반환하는 `div`의 마지막 자식 자리에 언제나 있고, 타입도 언제나 `EmailForm`입니다. `selectedMemberId`가 바뀌어도 위치와 타입은 그대로입니다. Fiber가 유지되고, 훅 목록이 유지되고, `email`이 유지됩니다. 바뀐 것은 `initialEmail` prop 하나인데 그 값을 읽는 코드는 `updateState`에 도달하는 순간 무시됩니다.
+
+이 규칙이 눈에 띄는 다른 예는 조건부 렌더링입니다.
+
+```jsx
+// 타입이 같으므로 같은 자리로 취급 → 토글해도 Counter의 state가 유지된다
+{
+  isFancy ? <Counter isFancy={true} /> : <Counter isFancy={false} />;
+}
+
+// 타입이 다르므로 → 토글할 때마다 state가 사라진다
+{
+  isPaused ? <p>일시정지</p> : <Counter />;
+}
+```
+
+## 고치는 방법
+
+### 1. state를 없앤다
+
+`email`은 `selectedMember.email`에서 나온 값입니다. 같은 사실이 두 곳에 저장되어 있고, 둘을 언제 맞출지가 문제로 남았습니다. 편집 기능이 필요 없다면 state를 두지 말고 prop을 그대로 읽습니다.
+
+편집이 필요하다면 state를 `MemberEmailPage`로 올리고 `EmailForm`은 `value`와 `onChange`만 받습니다. 사람별 편집 내용을 유지해야 할 때도 이 방법뿐입니다.
+
+### 2. key로 리셋한다
+
+```jsx
+<EmailForm key={selectedMemberId} initialEmail={selectedMember.email} />
+```
+
+`key`는 배열 렌더링 전용 문법이 아닙니다. 형제들 사이에서 "몇 번째 자리"라는 기본 식별자를 명시적인 값으로 대체하는 장치입니다. 단일 엘리먼트에도 씁니다.
+
+`selectedMemberId`가 바뀌면 React는 이전 `EmailForm`과 새 `EmailForm`을 다른 것으로 판단합니다. 이전 Fiber를 버리고 새 Fiber를 만들고, 새 Fiber에는 훅 목록이 없으니 `mountState`가 실행되므로 `initialEmail`이 다시 쓰입니다.
+
+배열에서 인덱스를 `key`로 쓰면 안 된다는 규칙도 같은 원리입니다. 인덱스를 쓰면 식별자가 내용이 아니라 자리를 따라가서, 순서가 바뀔 때 1번 항목의 state가 2번 항목에 붙습니다.
+
+```yaml
+User:     click
+React:              [render]  [commit]
+Browser:                                [paint]
+Screen:                                  NEW
+```
+
+한 사이클로 끝납니다. 대부분의 경우 이게 답입니다.
+
+### 3. 렌더 중에 바로 맞춘다
+
+```jsx
+function EmailForm({ initialEmail }) {
+  const [email, setEmail] = useState(initialEmail);
+  const [prevInitialEmail, setPrevInitialEmail] = useState(initialEmail);
+
+  if (initialEmail !== prevInitialEmail) {
+    setPrevInitialEmail(initialEmail);
+    setEmail(initialEmail);
+  }
+  // ...
+}
+```
+
+React는 컴포넌트 함수가 반환된 직후 "이번 렌더 중에 자기 자신에게 `setState`를 호출했는가"를 확인합니다. 호출했다면 같은 함수를 즉시 다시 실행합니다. 최대 25회까지 반복하고, 넘으면 `Too many re-renders`를 던집니다. 조건 없이 쓰면 무한 루프가 되고, 조건이 있으면 멈출 수 있는 이유입니다.
+
+중요한 것은 이 재실행이 **자식을 처리하기 전에** 일어난다는 점입니다. 첫 번째 패스가 반환한 자식 엘리먼트는 버려지고, 자식 컴포넌트 함수는 한 번도 실행되지 않습니다. DOM도 건드리지 않습니다. 커밋에 도달조차 하지 않았습니다.
+
+```yaml
+User:     click
+React:              [render]  [render]  [commit]
+Browser:                                          [paint]
+Screen:                                            NEW
+```
+
+렌더는 두 번이지만 커밋과 페인트는 각각 한 번입니다. 비용은 그 컴포넌트 함수 본문을 한 번 더 실행하는 정도입니다. 다만 훅 두 개로 이전 prop을 추적한다는 의도가 코드에서 잘 드러나지 않습니다. `key`로 해결되는 상황이면 `key`가 낫습니다.
+
+### 4. effect에서 맞춘다
+
+맨 앞에서 본 방법입니다. 보통은 마지막에 남겨둘 선택지입니다.
+
+`useLayoutEffect`로 바꾸면 커밋의 레이아웃 단계에서 동기 실행되므로, React가 브라우저에 양보하지 않고 그 자리에서 다시 렌더하고 커밋합니다.
+
+```yaml
+User:     click
+React:              [render]  [commit]  [layout]  [render]  [commit]
+Browser:                                                              [paint]
+Screen:                                                                NEW
+```
+
+틀린 프레임은 사라집니다. 대신 렌더 두 번과 커밋 두 번이 끊기지 않는 하나의 동기 블록으로 합쳐집니다. 클릭부터 첫 페인트까지 메인 스레드를 잡고 있는 시간이 그만큼 늘어납니다. 깜빡임을 응답 지연과 바꾼 것이지 일을 줄인 것이 아닙니다.
+
+## 선택지별 비용
+
+클릭 한 번을 기준으로 보면 이렇습니다.
+
+| 방법              | render              | commit                | paint | 틀린 값 노출       |
+| ----------------- | ------------------- | --------------------- | ----- | ------------------ |
+| state 제거        | 1                   | 1                     | 1     | 없음               |
+| `key` 리셋        | 1                   | 1 (+ 언마운트/마운트) | 1     | 없음               |
+| 렌더 중 조정      | 2 (해당 컴포넌트만) | 1                     | 1     | 없음               |
+| `useLayoutEffect` | 2 (서브트리 전체)   | 2                     | 1     | 없음 (페인트 지연) |
+| `useEffect`       | 2 (서브트리 전체)   | 2                     | 2     | 있음               |
+
+`key` 리셋도 공짜는 아닙니다. 이전 서브트리 전체가 언마운트되면서 effect cleanup이 돌고 DOM 노드가 제거되고, 새로 만들어집니다. `input`의 포커스와 선택 영역이 날아가고, 한글 입력 중이었다면 조합이 끊깁니다. 자손의 state도 전부 사라집니다. 이 예제처럼 노드 몇 개짜리면 무시할 수준이지만, 필드가 수십 개인 폼이라면 DOM을 다시 만드는 비용이 렌더 한 번 더 도는 비용을 넘습니다.
+
+이 코드에서 `useEffect` 방식의 비용은 사실 측정하기 어려울 만큼 작습니다. 문제는 이 패턴이 트리를 타고 번질 때입니다. A의 effect가 끝나야 B가 새 prop을 받고, B가 커밋되어야 B의 effect가 돌고, 그래야 C가 움직입니다. 3단이면 사이클이 네 번입니다. 각 컴포넌트만 놓고 보면 effect 하나씩이라 문제로 보이지 않습니다.
+
+## 실제로 확인하기
+
+React DevTools Profiler로 녹화하고 버튼을 한 번 누릅니다. 커밋 막대가 하나면 정상입니다. 두 개면 두 번째 업데이트를 무언가가 유발한 것이고, 대부분 effect입니다. 두 번째 막대를 선택하면 어느 컴포넌트가 원인인지 나옵니다. 설정에서 "Record why each component rendered"를 켜면 props 때문인지 state 때문인지 훅 때문인지까지 표시됩니다.
+
+`Profiler` 컴포넌트를 직접 쓰는 방법도 있습니다.
+
+```jsx
+<Profiler id="email-form" onRender={(id, phase) => console.log(id, phase)}>
+```
+
+`phase`가 `nested-update`로 찍히면 그 렌더는 effect나 layout effect가 유발한 연쇄 업데이트입니다. 파생 state를 의심할 근거가 됩니다.
+
+React Compiler는 이 버그를 고치지 않습니다. 컴파일러가 자동화하는 것은 메모이제이션이고, 훅의 초기값 규칙과 Fiber 식별 규칙은 건드리지 않습니다.
+
+## 정리
+
+`initial`이 붙은 prop을 받아 `useState`에 넣는 코드를 보면 세 가지를 확인하면 됩니다.
+
+- `useState`의 인자는 그 Fiber가 처음 만들어질 때만 쓰입니다. 두 번째 렌더부터는 `updateState`가 인자를 무시합니다.
+- Fiber는 같은 부모 안에서의 위치와 엘리먼트 타입이 같으면 재사용됩니다. prop이 바뀌었다는 것은 Fiber를 버릴 이유가 되지 않습니다.
+- 그래서 prop과 state를 맞춰줘야 할 일이 생겼다면, 애초에 state를 두지 말았어야 하는 경우가 대부분입니다.
+
+`useEffect`로 `setEmail`을 부르는 코드는 동작은 합니다. 실제 코드베이스에서도 흔합니다. 다만 한 프레임 늦고, 늦는 이유가 위 세 가지와 같은 자리에서 나옵니다.
+
+> [!NOTE]
+> 원본 예제는 [TkDodo의 Putting props to useState](https://tkdodo.eu/blog/putting-props-to-use-state)에서 가져와 이름과 곁가지를 정리한 것입니다. 파생 state 전반은 React 공식 문서의 [You Might Not Need an Effect](https://react.dev/learn/you-might-not-need-an-effect)와 [Preserving and Resetting State](https://react.dev/learn/preserving-and-resetting-state)에 정리되어 있습니다.
