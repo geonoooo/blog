@@ -17,7 +17,7 @@ draft: false
 
 전체 흐름은 3단계로 나뉩니다.
 
-```text
+```js
 ① 이메일 입력 → "인증코드 받기"     (서버가 6자리 코드 생성 → 이메일로 발송)
 ② 받은 코드 입력 → "확인"           (서버가 코드 일치 확인 → verified 표시)
 ③ 나머지 정보 채우고 → "회원가입"    (서버가 "이 이메일 인증됐나?" 재확인 후 계정 생성)
@@ -60,7 +60,7 @@ draft: false
 
 SMTP를 "규약"이라고 부르는데, 정작 그 규약이 뭔지는 안 보이면 추상적으로 남습니다. SMTP는 사실 **평문 텍스트 명령 몇 줄을 정해진 순서로 주고받는 것**뿐입니다. 서버와의 대화를 그대로 옮기면 이렇게 생겼습니다.
 
-```text
+```yaml
 EHLO myserver.com                  나 이런 서버야 (인사)
 MAIL FROM: <noreply@example.com>    봉투 발신자
 RCPT TO: <customer@example.com>    봉투 수신자
@@ -174,14 +174,14 @@ nodemailer/SMTP와 비교하면:
 
 실무 팁 하나. SMTP 정보가 아직 없어도 기능 개발은 시작할 수 있습니다. 발송부를 이렇게 추상화했습니다.
 
-```text
+```dotenv
 MAIL_TRANSPORT=console  →  실제로 안 보내고 서버 터미널에 코드를 출력
 MAIL_TRANSPORT=smtp     →  위의 SMTP 정보로 진짜 발송
 ```
 
 console 모드는 이렇게 로그에 찍습니다.
 
-```text
+```yaml
 ──────── 이메일 인증코드(개발용) ────────
 받는사람: customer@example.com
 인증코드: 483920

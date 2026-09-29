@@ -55,8 +55,11 @@ View Transitions API를 안 씁니다. React도 아닙니다.
 ></div>
 ```
 
-```text
-position: fixed | z-index: 99999 | background: rgb(250,249,245) | 100% × 100vh
+```yaml
+position: fixed
+z-index: 99999
+background: rgb(250,249,245)
+크기: 100% × 100vh
 ```
 
 배경색이 페이지 배경과 같은 크림색인 전체 화면 판입니다. 링크를 누르면 이 판을 덮고, 새 문서를 받고, 걷어냅니다. MPA는 문서가 파기되는 동안 JS가 죽어서 애니메이션을 걸 수 없으니, 그 구간을 같은 색으로 가리는 겁니다.
@@ -199,10 +202,10 @@ forward: () => window.history.forward(),
 
 전환 중 실제로 도는 애니메이션을 찍어 보니 제가 지정하지 않은 게 하나 더 있었습니다.
 
-```text
--ua-view-transition-group-anim-_t_0_   250ms
-page-enter                             200ms
-page-exit                              140ms
+```yaml
+-ua-view-transition-group-anim-_t_0_: 250ms
+page-enter: 200ms
+page-exit: 140ms
 ```
 
 첫 줄이 브라우저 기본 group 애니메이션입니다. `::view-transition-group`은 요소의 **크기와 위치를 옛 값에서 새 값으로 보간**합니다. 목록과 글은 `main` 높이가 크게 다르고 이동 시 스크롤이 0으로 리셋되니, 250ms 동안 스냅샷이 늘어나면서 위로 밀립니다.
@@ -228,8 +231,12 @@ group 보간을 끄고 옛 스냅샷을 아예 그리지 않는 것으로 해결
 
 Webflow의 IX2는 rAF로 인라인 style을 직접 씁니다. Web Animations API에 안 잡히므로 `getComputedStyle`을 rAF마다 샘플링했습니다.
 
-```text
-1049ms:0.11  1211ms:0.486  1411ms:0.784  1611ms:0.936  1928ms:0.999
+```yaml
+1049ms: 0.11
+1211ms: 0.486
+1411ms: 0.784
+1611ms: 0.936
+1928ms: 0.999
 ```
 
 **900ms가 넘습니다.** 제가 쓰던 280ms의 3배 이상입니다. 곡선을 이징에 대보면 `easeOutCubic`에 거의 일치합니다.
@@ -319,7 +326,7 @@ CSS 애니메이션은 **요소가 DOM에 새로 삽입될 때만** 재생됩니
 
 `opacity`와 `transform`만 쓴 이유는 브라우저 렌더링 파이프라인에 있습니다.
 
-```text
+```yaml
 Style → Layout → Paint → Layerize / Composite
 ```
 
@@ -335,7 +342,7 @@ Style → Layout → Paint → Layerize / Composite
 
 말로만 믿을 필요는 없습니다. Chrome DevTools 프로토콜의 `LayerTree` 도메인이 레이어 목록과 승격 사유를 문장으로 돌려줍니다. 이 블로그에서 페이지를 이동하는 동안 잡은 결과입니다.
 
-```text
+```log
 div.page-enter  2560x4953
   → Has an active accelerated transform animation or transition.
   → Has an active accelerated opacity animation or transition.

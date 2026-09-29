@@ -69,7 +69,7 @@ function getServerSnapshot(): Theme {
 
 `useSyncExternalStore` 버전, CPU 20x 스로틀:
 
-```text
+```log
       3.3ms | class  | before ThemeScript: dark=false
     331.2ms | paint  | first-contentful-paint
     394.7ms | frame  | #10 dark=false
@@ -82,7 +82,7 @@ function getServerSnapshot(): Theme {
 
 `useState` + `useEffect` 버전, 같은 조건:
 
-```text
+```log
       3.1ms | class  | before ThemeScript: dark=false
     340.3ms | paint  | first-contentful-paint
     400.4ms | frame  | #9  dark=false
@@ -118,7 +118,7 @@ requestAnimationFrame(() => {
 
 결과:
 
-```text
+```log
      39.9ms | frame  | #2 dark=false
      39.9ms | class  | dark false -> true
      52.6ms | frame  | #3 dark=true

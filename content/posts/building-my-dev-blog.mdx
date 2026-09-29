@@ -54,7 +54,7 @@ const posts = {
 
 폴더 구조는 **FSD(Feature-Sliced Design)** 를 따랐습니다.
 
-```text
+```yaml
 src/
   app/          # Next.js 라우트 (페이지만)
   entities/
@@ -126,7 +126,7 @@ seo에 초점을 뒀습니다. 이 부분을 고려를 하다보니 url 설정�
 
 ### 3-3. 실제 라우트 구조
 
-```text
+```yaml
 src/app/
   page.tsx                       # / (최근 글)
   posts/
@@ -190,18 +190,18 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
 
 **방법 1 — 쿼리 파라미터로 합치기**
 
-```text
-/posts               → 전체
-/posts?category=react → react 카테고리
+```yaml
+/posts               # 전체
+/posts?category=react # react 카테고리
 ```
 
 **방법 2 — optional catch-all로 합치기**
 
-```text
+```yaml
 src/app/posts/[[...filter]]/page.tsx
 
-/posts               → filter = undefined → 전체
-/posts/react         → filter = ["react"] → react 카테고리
+/posts               # filter = undefined → 전체
+/posts/react         # filter = ["react"] → react 카테고리
 ```
 
 코드 중복이 줄어드니까 당연히 끌렸습니다. 근데 조사해보니 **SEO 관점에서 이 둘 다 문제**더라고요.

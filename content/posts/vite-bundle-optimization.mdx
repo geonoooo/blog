@@ -125,7 +125,7 @@ export * from "./queries";
 
 페이지마다 청크는 잘 분리되어 있습니다.
 
-```text
+```shellsession
 dist/assets/page-DxW9xMzb.js   3.89 kB
 dist/assets/page-HF1Y06G0.js   4.09 kB
 dist/assets/page-BaPaGzwP.js   4.50 kB
@@ -134,7 +134,7 @@ dist/assets/page-BaPaGzwP.js   4.50 kB
 
 근데 어느 페이지를 들어가도 따라오는 큰 파일이 하나 있었습니다.
 
-```text
+```shellsession
 utils-vendor-BovN-_R9.js   212.34 kB  gzip: 66.96 kB
 ```
 
@@ -236,7 +236,7 @@ vendor까지 정리하고 폰트 쪽을 최적화 했습니다. **다운로드 �
 
 원래는 Pretendard 한국어 폰트를 Regular / Medium / Bold 세 weight로 self-host하고 있었습니다.
 
-```text
+```shellsession
 Pretendard-Regular.subset.woff2   264 KB
 Pretendard-Medium.subset.woff2    264 KB
 Pretendard-Bold.subset.woff2      268 KB
@@ -274,7 +274,7 @@ import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
 
 **그 대신 폰트 요청이 30~50개씩 깔립니다.**
 
-```text
+```shellsession
 PretendardVariable.subset.0.woff2    38 KB
 PretendardVariable.subset.2.woff2    43 KB
 PretendardVariable.subset.3.woff2    40 KB
