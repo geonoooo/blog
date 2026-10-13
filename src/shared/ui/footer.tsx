@@ -1,5 +1,4 @@
 import Image from "next/image";
-import { Suspense } from "react";
 import { siteConfig } from "@/shared/config";
 import { VisitCounter, VisitTracker } from "@/entities/stats";
 import { Container } from "./container";
@@ -17,9 +16,7 @@ export function Footer() {
           {new Date().getFullYear()} {siteConfig.author.name}. All rights reserved.
         </p>
         <div className="flex items-center gap-4">
-          <Suspense fallback={null}>
-            <VisitCounter />
-          </Suspense>
+          <VisitCounter />
           <a
             href={siteConfig.social.github}
             target="_blank"
