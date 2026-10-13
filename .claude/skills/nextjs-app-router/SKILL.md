@@ -21,6 +21,8 @@ description: Next.js 16 + React 19 App Router 규칙. server/client 경계, 데�
 - **읽기**: Server Component에서 `entities/*/api` 함수 직접 await.
 - **쓰기/외부 호출**: `app/api/*/route.ts` Route Handler 또는 Server Action.
 - 클라이언트에서 fetch 트리거가 꼭 필요한 케이스(예: 브라우저 시그널 기반 visit 트래킹)만 Route Handler로.
+- **예외 — 방문마다 바뀌는 값**(방문자 수 등)은 정적 페이지 HTML에 넣지 않는다. Route Handler `GET`으로 내보내고 client 컴포넌트가 마운트 후 받아온다 (예: `entities/stats/ui/visit-counter.tsx`).
+  - 이유: 레이아웃·공용 UI에서 `revalidate`가 붙은 read를 await하면 그 레이아웃 아래 모든 페이지가 ISR이 된다. 값이 바뀔 때마다 재생성 결과가 달라져 Vercel ISR Write·Fast Origin Transfer가 쌓인다. 2026-10에 Hobby 한도 초과로 배포가 정지된 원인.
 
 ## Caching & Revalidation
 
@@ -45,6 +47,7 @@ description: Next.js 16 + React 19 App Router 규칙. server/client 경계, 데�
 ## 흔한 실수
 
 - ❌ Server Component에 `"use client"` 위쪽으로 끌어올림 → 트리 전체가 client됨.
+- ❌ 레이아웃에서 짧은 `revalidate` read를 await → 하위 정적 페이지 전부 ISR. `pnpm build` 표에 `Revalidate` 열이 생기면 의도한 것인지 확인.
 - ❌ Route Handler 안에서 비싼 read 후 다시 client에서 또 fetch.
 - ❌ env 변수를 `NEXT_PUBLIC_` 없이 client 컴포넌트에서 참조 (undefined 됨).
 - ❌ `params` await 안 하고 직접 destructure (Next.js 15+에서 깨짐).

@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { geist, pretendard, sacramento, siteConfig } from "@/shared/config";
 import { ThemeProvider, ThemeScript } from "@/shared/providers";
-import { Footer, Header, JsonLd, PageTransition } from "@/shared/ui";
+import { Header, JsonLd, PageTransition } from "@/shared/ui";
+import { Footer } from "./_components";
 import "./globals.css";
 
 export const metadata: Metadata = {
