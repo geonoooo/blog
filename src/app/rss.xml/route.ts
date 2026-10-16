@@ -1,6 +1,9 @@
 import { getAllPosts } from "@/entities/post";
 import { siteConfig } from "@/shared/config";
 
+// 글은 빌드 때만 바뀐다. RSS 리더가 확인할 때마다 함수가 돌지 않게 빌드 결과를 그대로 낸다.
+export const dynamic = "force-static";
+
 function escapeXml(input: string): string {
   return input
     .replace(/&/g, "&amp;")
