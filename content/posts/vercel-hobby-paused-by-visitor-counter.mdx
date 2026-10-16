@@ -1,0 +1,195 @@
+---
+title: "vercel 정지 풀기"
+summary: "푸터의 방문자 수가 모든 페이지를 1분 주기 ISR로 만들고, 방문할 때마다 캐시를 무효화했습니다. 30일 동안 ISR Writes 3.7M(한도 200K), Fast Origin Transfer 29.2GB(한도 10GB)를 쓰고 팀 전체가 402로 멈췄습니다. 원인과 고친 코드, 정지를 푼 과정을 정리합니다."
+date: 2026-10-16
+category: "deep-dive"
+tags: ["vercel", "next.js", "isr", "cache", "supabase"]
+cover: "counter"
+draft: false
+---
+
+10월 13일부터 블로그가 열리지 않았습니다. 처음엔 사용자가 늘어서 무료 한도를 다 쓴 줄 알았습니다. 새로고침할 때마다 방문자 수가 올라가서 그렇다고 생각했고, Cloudflare로 옮기면 무료로 계속 쓸 수 있는지부터 찾아봤습니다. ~~원인보다 옮길 곳을 먼저 찾았습니다.~~
+
+Usage 탭을 열어 보니 한도를 넘은 항목은 트래픽이 아니었습니다. 4월에 붙인 [방문자 카운터](/posts/adding-visitor-counter-with-supabase)가 모든 페이지를 계속 다시 만들고 있었습니다.
+
+## 증상 — 402 DEPLOYMENT_DISABLED
+
+```bash
+$ curl -sI https://www.geonoooo.dev
+HTTP/2 402
+x-vercel-error: DEPLOYMENT_DISABLED
+```
+
+같은 팀에 있는 다른 프로젝트 두 개도 똑같이 402를 돌려줬습니다. Hobby 정지는 프로젝트 단위가 아니라 팀 단위입니다. 블로그 하나 때문에 팀 안의 프로젝트가 전부 같이 멈춥니다.
+
+## 사용자가 늘어서가 아니었다
+
+새로고침 가설은 두 군데서 틀렸습니다.
+
+- 방문자 카운터는 `sessionStorage`로 막혀 있습니다. 같은 탭에서 새로고침하면 POST를 다시 보내지 않습니다.
+- Vercel이 세는 건 사용자 수가 아닙니다. 요청 수, 함수 실행 횟수, 캐시 쓰기 양, CPU 시간을 항목별로 셉니다.
+
+어느 항목이 넘었는지는 CLI로 볼 수 없었습니다. `vercel usage`는 Hobby 팀에서 데이터를 주지 않습니다.
+
+```bash
+$ vercel usage --scope <team>
+Error: Billing cost data is unavailable for 2026-10-01 through 2026-10-16. This does not mean usage was zero. It usually means the team has no active subscription for that range, or the range is before the team's billing data starts.
+```
+
+숫자는 대시보드의 Usage 탭에 있습니다.
+
+![Vercel Usage 탭. 상단에 Paused Oct 13 · Fast Origin Transfer. ISR Writes 3.7M / 200K, Fast Origin Transfer 29.2 GB / 10 GB, Fluid Active CPU 5h 54m / 4h는 한도를 넘었고, CDN Requests 855K / 1M, Function Invocations 415K / 1M, Fast Data Transfer 3.79 GB / 100 GB 등 나머지는 한도 안이다.](/posts/vercel-hobby-paused-by-visitor-counter/usage.png)
+
+| 구분    | 항목                 | 최근 30일        |
+| ------- | -------------------- | ---------------- |
+| 넘음    | ISR Writes           | 3.7M / 200K      |
+| 넘음    | Fast Origin Transfer | 29.2 GB / 10 GB  |
+| 넘음    | Fluid Active CPU     | 5h 54m / 4h      |
+| 한도 안 | CDN Requests         | 855K / 1M        |
+| 한도 안 | Function Invocations | 415K / 1M        |
+| 한도 안 | Fast Data Transfer   | 3.79 GB / 100 GB |
+
+요청 수와 전송량은 한도 안입니다. 넘은 세 항목은 모두 페이지를 다시 만드는 데 드는 비용입니다. ISR Writes는 한도의 18배입니다.
+
+## 원인 — 방문자 수가 모든 페이지를 다시 만들었다
+
+정지 시점에 프로덕션에 떠 있던 건 9월 30일 배포본입니다. 이 코드에서 방문자 수는 루트 레이아웃의 푸터가 서버에서 그렸습니다.
+
+```tsx
+// src/entities/stats/ui/visit-counter.tsx (9월 30일 배포본, 에러 처리 생략)
+export async function VisitCounter() {
+  const stats = await getVisitStats();
+
+  return (
+    <p className="tabular-nums">
+      Today {stats.today.toLocaleString()} · Total {stats.total.toLocaleString()}
+    </p>
+  );
+}
+```
+
+```ts
+// src/entities/stats/api/get-visit-stats.ts (9월 30일 배포본)
+export const getVisitStats = unstable_cache(fetchVisitStats, ["visit-stats"], {
+  revalidate: 60,
+  tags: [VISIT_STATS_TAG],
+});
+```
+
+```ts
+// src/app/api/visit/route.ts의 POST (9월 30일 배포본)
+try {
+  await incrementVisit();
+  revalidateTag(VISIT_STATS_TAG, "max");
+} catch {
+  // best-effort
+}
+```
+
+세 가지가 겹쳤습니다.
+
+1. **루트 레이아웃에서 `revalidate: 60` 데이터를 await했습니다.** 그 레이아웃 아래 모든 페이지가 1분 주기 ISR이 됩니다. 빌드 때 한 번 만들고 끝나야 할 글 페이지까지 포함입니다.
+2. **다시 만들 때마다 결과가 달라졌습니다.** `Today` 숫자는 방문마다 바뀝니다. Vercel은 재생성 결과가 이전과 같으면 ISR 쓰기로 세지 않고, 달라지면 저장한 크기만큼 셉니다. 이 블로그는 매번 달랐습니다.
+3. **방문할 때마다 캐시를 무효화했습니다.** POST에서 `revalidateTag`를 부르면 이 태그를 쓴 페이지가 전부 stale이 됩니다. 다음 요청이 들어온 페이지마다 재생성이 일어나고, 1분 주기는 의미가 없어집니다.
+
+ISR 쓰기는 8KB 단위로 셉니다. 3.7M × 8KB ≈ 29.6GB로, Fast Origin Transfer 29.2GB와 거의 같습니다. 같은 재생성에서 나온 숫자로 봅니다. 다만 Fast Origin Transfer를 어떤 기준으로 세는지는 문서에서 확인하지 못했습니다. Fluid Active CPU도 재생성마다 MDX 페이지를 렌더링하면서 같이 늘어난 것으로 봅니다.
+
+### 4월부터 이 구조였는데 왜 10월에 멈췄나
+
+```yaml
+2026-04-27: 푸터에 방문자 수 추가. 모든 페이지가 1분 주기 ISR이 됨
+2026-08-24: 방문·조회 POST에 revalidateTag 추가 (#7). 방문마다 모든 페이지가 stale
+2026-09-23: 하루 CDN 요청이 1만 건 안팎에서 수만 건으로 증가
+2026-09-30: 마지막 프로덕션 배포
+2026-10-13: 팀 정지. 같은 날 원인을 고친 #25 머지
+2026-10-16: 남은 문제를 고친 #26 머지, 정지 해제
+```
+
+시간 기반 ISR만 있을 때는 재생성이 페이지당 1분에 한 번으로 묶입니다. 8월에 `revalidateTag`가 붙으면서 방문 수만큼 재생성이 일어나게 됐고, 9월 말에 요청이 늘었습니다. 두 가지가 겹친 시점과 정지 시점이 맞습니다.
+
+#7에서 `revalidateTag`를 넣은 이유는 "카운트를 올려도 60초 동안 반영이 안 된다"였습니다. 방문자 수가 1분 늦게 보이는 걸 고치려다 방문마다 모든 페이지를 다시 만들게 됐습니다.
+
+## 고친 것 1 — 숫자를 HTML에서 뺐다 (#25)
+
+방문자 수를 서버 HTML에 넣지 않고, 브라우저가 마운트 후 `GET /api/visit`으로 받아오게 바꿨습니다. 코드는 [방문자 카운터 글](/posts/adding-visitor-counter-with-supabase)에 있습니다.
+
+푸터가 더 이상 `revalidate` 데이터를 읽지 않으니 글 페이지는 다시 빌드 타임 정적 페이지가 됩니다. `pnpm build` 결과 표에서 확인합니다.
+
+| 라우트          | 표시 | 의미                                         |
+| --------------- | ---- | -------------------------------------------- |
+| `/posts/[slug]` | `●`  | 빌드 타임 정적 생성 (`generateStaticParams`) |
+| `/about`        | `○`  | 정적                                         |
+
+표에 `Revalidate` 열이 없으면 ISR 페이지가 없다는 뜻입니다.
+
+## 고친 것 2 — #25 뒤에도 남은 것 (#26)
+
+#25로 큰 원인은 사라졌지만, 요청마다 비용이 생기는 곳이 세 군데 더 있었습니다.
+
+| 위치             | 문제                                                            | 수정                                      |
+| ---------------- | --------------------------------------------------------------- | ----------------------------------------- |
+| 방문·조회 POST   | 쓰기마다 `revalidateTag` → 방문 수만큼 캐시 쓰기                | 무효화 삭제, `revalidate: 60` 주기에 맡김 |
+| `GET /api/visit` | 캐시 헤더 없음 → 페이지뷰마다 함수 실행                         | `Cache-Control: s-maxage=60`              |
+| `/rss.xml`       | GET Route Handler 기본값이 동적 → RSS 리더가 확인할 때마다 실행 | `dynamic = "force-static"`                |
+
+```ts
+// src/app/api/visit/route.ts
+export async function GET() {
+  try {
+    // 페이지를 볼 때마다 함수가 돌지 않게 60초 동안 CDN이 대신 응답한다.
+    return Response.json(await getVisitStats(), { headers: { "Cache-Control": "s-maxage=60" } });
+  } catch {
+    return new Response(null, { status: 503 });
+  }
+}
+```
+
+Vercel CDN은 `s-maxage`가 붙은 함수 응답을 그 시간만큼 캐시합니다. 60초 동안은 함수가 실행되지 않습니다. CDN이 캐시를 들고 있으니 `getVisitStats`를 감싸던 `unstable_cache`는 지웠습니다. 캐시를 두 겹으로 둘 이유가 없습니다.
+
+```ts
+// src/app/rss.xml/route.ts
+// 글은 빌드 때만 바뀐다. RSS 리더가 확인할 때마다 함수가 돌지 않게 빌드 결과를 그대로 낸다.
+export const dynamic = "force-static";
+```
+
+Next 16에서 GET Route Handler는 기본적으로 캐시되지 않습니다. Cache Components를 쓰지 않으면 `force-static`으로 빌드 타임에 고정합니다. 빌드 결과에서 `ƒ /rss.xml`이 `○ /rss.xml`로 바뀝니다.
+
+대가는 반영 속도입니다. 방문자 수와 조회수가 최대 60초 늦게 보입니다. #7이 없애려던 그 지연으로 돌아간 셈입니다.
+
+### 홈은 그대로 뒀다
+
+홈 `/`는 카테고리와 정렬을 `searchParams`로 받아서 요청마다 렌더링합니다. 이것도 정적으로 바꿀지 재 봤습니다. 로컬 프로덕션 서버에서 첫 요청은 128ms(Supabase 조회 포함), 이후는 4~8ms였습니다. 정적으로 바꾸려면 조회수 정렬, 인기 글, 카드의 조회수를 전부 브라우저에서 받아와야 합니다. 렌더 비용이 작아서 그대로 뒀습니다.
+
+## 정지 풀기
+
+선택지는 네 가지였습니다.
+
+| 방법              | 비용   | 걸리는 점                                                                                         |
+| ----------------- | ------ | ------------------------------------------------------------------------------------------------- |
+| Cloudflare로 이전 | 무료   | 같은 코드를 옮기면 재생성도 그대로 일어남. 무료 플랜은 하루 10만 요청, 요청당 CPU 10ms, 워커 3MiB |
+| Pro 업그레이드    | 월 $20 | 바로 재개                                                                                         |
+| 30일 기다리기     | 무료   | 커뮤니티에 사용량이 내려가도 자동으로 안 풀렸다는 글이 여럿 있음                                  |
+| 지원 요청         | 무료   | 응답 시점을 모름                                                                                  |
+
+Cloudflare로 옮길 이유는 "사용자가 늘어서"였는데, 트래픽 항목은 한도 안이었습니다. 코드를 고치는 게 먼저였습니다.
+
+지원 요청은 [vercel.com/help](https://vercel.com/help)에서 로그인한 상태로 합니다. 들어가면 Vercel Agent(AI)가 먼저 응대합니다. 계정을 고르고 원인과 수정 PR을 적었더니, 케이스를 만들기 전에 이런 답이 왔습니다.
+
+> You have a one-time courtesy unblock available for your Hobby team, which temporarily increases your usage limits by 3x for 30 days to help restore your deployments while your fixes take effect. This is a one-time courtesy action, so if your usage exceeds limits again after the 30-day period, upgrading to the Pro plan will be required to restore service.
+
+Hobby 팀에 한 번만 쓸 수 있는 해제입니다. 30일 동안 한도가 3배가 되고, 그 뒤에 다시 넘으면 Pro로 올려야 합니다. 안내된 폼을 제출하자 바로 풀렸습니다.
+
+### 풀려도 수정은 배포되지 않았다
+
+해제 직후에도 사이트는 9월 30일 배포본으로 떠 있었습니다. 정지 중에 `main`에 머지한 #25와 #26은 배포가 만들어지지 않았습니다. `vercel ls`의 마지막 배포가 9월 30일 것 그대로였습니다. 해제한 뒤 `main`을 직접 다시 배포해야 합니다.
+
+3배로 늘어난 한도로 계산해도 Fast Origin Transfer는 29.2GB / 30GB입니다. 옛 코드가 오래 떠 있으면 다시 넘을 수 있습니다. 해제하자마자 배포해야 합니다.
+
+## 정리
+
+- 방문마다 바뀌는 값은 정적 HTML에 넣지 않는다. 브라우저에서 받아온다.
+- 레이아웃에서 `revalidate`가 붙은 데이터를 await하면 그 아래 모든 페이지가 ISR이 된다. `pnpm build` 결과 표에 `Revalidate` 열이 생기면 의도한 것인지 확인한다.
+- 방문·조회 카운터처럼 요청마다 쓰는 값은 쓰기마다 `revalidateTag`를 부르지 않는다.
+- 브라우저가 부르는 GET Route Handler에는 `s-maxage`를 붙인다. 빌드 때만 바뀌는 GET은 `force-static`으로 고정한다.
+- 한도 문제는 사용자 수가 아니라 Usage 탭의 항목별 숫자로 본다.
+- Hobby 정지는 팀 단위다. 정지 중 머지는 배포되지 않고, courtesy unblock은 한 번뿐이다.
