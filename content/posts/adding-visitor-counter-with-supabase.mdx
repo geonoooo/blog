@@ -2,7 +2,7 @@
 title: "블로그 조회수 하나 넣는데 Supabase까지 필요할까?"
 summary: "Hits, Upstash Redis, Supabase를 놓고 비교했습니다. 카운터 하나만 보면 Upstash가 맞지만, 댓글과 글별 조회수까지 붙일 계획이라 Supabase를 골랐습니다."
 date: 2026-04-27
-updated: 2026-10-13
+updated: 2026-10-16
 category: "deep-dive"
 tags: ["supabase", "next.js", "vercel"]
 cover: "counter"
@@ -184,15 +184,14 @@ export async function POST(request: Request) {
 - **봇은 거른다.** 정확한 필터는 아니지만 흔한 크롤러는 잡힙니다.
 - **실패는 삼킨다.** 카운터 따위가 안 올라간다고 사용자에게 에러를 보여줄 이유가 없습니다.
 
-조회는 `unstable_cache`로 1분 묶어뒀습니다.
+조회는 RPC 한 번입니다.
 
 ```ts
 // src/entities/stats/api/get-visit-stats.ts
 import "server-only";
-import { unstable_cache } from "next/cache";
 import { getSupabaseAdmin } from "@/shared/lib/supabase";
 
-async function fetchVisitStats() {
+export async function getVisitStats() {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase.rpc("get_visit_stats");
   if (error) throw error;
@@ -203,27 +202,22 @@ async function fetchVisitStats() {
     total: Number(row?.total_count ?? 0),
   };
 }
-
-export const getVisitStats = unstable_cache(fetchVisitStats, ["visit-stats"], {
-  revalidate: 60,
-  tags: ["visit-stats"],
-});
 ```
 
-방문자 카운터는 1분 정도 늦어도 아무도 모릅니다. 매 요청마다 DB를 때릴 이유가 없죠.
-
-이 값은 같은 Route Handler의 `GET`으로 내보냅니다.
+이 값은 같은 Route Handler의 `GET`으로 내보내고, 응답에 `s-maxage=60`을 붙입니다.
 
 ```ts
 // src/app/api/visit/route.ts
 export async function GET() {
   try {
-    return Response.json(await getVisitStats());
+    return Response.json(await getVisitStats(), { headers: { "Cache-Control": "s-maxage=60" } });
   } catch {
     return new Response(null, { status: 503 });
   }
 }
 ```
+
+`s-maxage`는 CDN에만 적용되는 캐시 시간입니다. 60초 동안은 Vercel CDN이 저장해둔 응답을 돌려주고 함수는 실행되지 않습니다. 방문자 카운터는 1분 정도 늦어도 아무도 모릅니다. 페이지를 볼 때마다 함수를 돌리고 DB를 때릴 이유가 없습니다.
 
 > [!WARNING]
 > **2026-10-13 수정 — 처음엔 RSC에서 직접 읽었습니다**
@@ -233,6 +227,15 @@ export async function GET() {
 > 방문자 수는 방문마다 바뀌니 재생성할 때마다 HTML이 달라지고, Vercel은 그때마다 ISR Write를 기록합니다. 30일 동안 ISR Write 370만 단위(Hobby 한도 20만), Fast Origin Transfer 30GB(한도 10GB)가 쌓였고 프로덕션 배포가 `DEPLOYMENT_DISABLED`(402)로 정지됐습니다.
 >
 > 지금은 숫자를 HTML에 넣지 않고 브라우저에서 `GET /api/visit`으로 받아옵니다. 글 페이지는 다시 빌드 타임 정적 페이지입니다.
+
+> [!WARNING]
+> **2026-10-16 수정 — 쓰기마다 캐시를 무효화하지 않습니다**
+>
+> 처음엔 조회를 `unstable_cache`(`revalidate: 60`)로 감싸고, POST에서 카운트를 올린 뒤 `revalidateTag("visit-stats")`로 바로 무효화했습니다. 그러면 방문 한 번마다 캐시가 다시 써집니다. 글별 조회수도 같은 구조였습니다.
+>
+> `GET`에는 캐시 헤더가 없어서 페이지를 볼 때마다 함수가 한 번씩 실행됐습니다.
+>
+> 지금은 두 POST 모두 무효화하지 않습니다. 방문자 수는 `GET` 응답의 `s-maxage=60`에 맡기고, CDN이 캐시를 들고 있으니 `unstable_cache`는 지웠습니다. 글별 조회수는 `unstable_cache`의 `revalidate: 60` 주기에 맡깁니다.
 
 ## 6. 클라이언트에서 한 번만 — sessionStorage 가드
 
