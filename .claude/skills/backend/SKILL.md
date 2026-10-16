@@ -70,13 +70,12 @@ export async function getVisitStats(): Promise<VisitStats> {
 자주 안 변하는 read는 `unstable_cache`로 래핑:
 
 ```ts
-export const getVisitStats = unstable_cache(fetchVisitStats, ["visit-stats"], {
+export const getPostViews = unstable_cache(fetchPostViews, ["post-views"], {
   revalidate: 60,
-  tags: ["visit-stats"],
 });
 ```
 
-쓰기 후 무효화는 `revalidateTag("visit-stats")`.
+쓰기 후 무효화는 `revalidateTag`. 단, 방문·조회 카운터처럼 요청마다 쓰는 값은 무효화하지 않고 `revalidate` 주기에 맡긴다 — 방문 수만큼 캐시 쓰기가 생긴다.
 
 ## Route Handler 패턴
 

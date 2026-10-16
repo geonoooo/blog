@@ -23,11 +23,13 @@ description: Next.js 16 + React 19 App Router 규칙. server/client 경계, 데�
 - 클라이언트에서 fetch 트리거가 꼭 필요한 케이스(예: 브라우저 시그널 기반 visit 트래킹)만 Route Handler로.
 - **예외 — 방문마다 바뀌는 값**(방문자 수 등)은 정적 페이지 HTML에 넣지 않는다. Route Handler `GET`으로 내보내고 client 컴포넌트가 마운트 후 받아온다 (예: `entities/stats/ui/visit-counter.tsx`).
   - 이유: 레이아웃·공용 UI에서 `revalidate`가 붙은 read를 await하면 그 레이아웃 아래 모든 페이지가 ISR이 된다. 값이 바뀔 때마다 재생성 결과가 달라져 Vercel ISR Write·Fast Origin Transfer가 쌓인다. 2026-10에 Hobby 한도 초과로 배포가 정지된 원인.
+  - 그 `GET` 응답에는 `Cache-Control: s-maxage`를 붙여 CDN이 응답하게 한다 (예: `app/api/visit/route.ts`). 안 붙이면 페이지뷰마다 Function Invocation이 생긴다.
 
 ## Caching & Revalidation
 
-- 자주 안 변하는 read는 `unstable_cache`로 감싸고 `tags`/`revalidate` 명시 (예: `entities/stats/api/get-visit-stats.ts`).
+- 자주 안 변하는 read는 `unstable_cache`로 감싸고 `tags`/`revalidate` 명시 (예: `entities/stats/api/get-post-views.ts`).
 - 변경 발생 시 `revalidateTag` / `revalidatePath`.
+  - 예외 — 방문·조회 카운터처럼 요청마다 쓰는 값은 쓰기마다 무효화하지 않고 `revalidate` 주기에 맡긴다. 무효화하면 방문 수만큼 캐시가 다시 써져 Vercel ISR Write가 쌓인다.
 - 정적 페이지는 `generateStaticParams`로 빌드 타임 생성.
 
 ## Route 규칙
