@@ -36,6 +36,7 @@ description: Next.js 16 + React 19 App Router 규칙. server/client 경계, 데�
 
 - `params`는 **async** (Next.js 15+): `params: Promise<{ slug: string }>` → `const { slug } = await params`.
 - `searchParams`도 마찬가지.
+- 동적 페이지(홈 `/` — `searchParams`로 렌더)로 가는 `<Link>`는 `prefetch={false}`. prefetch마다 `/_tree`와 페이지 요청 2건이 함수를 실행하는데, 클릭 때 다시 요청해서 prefetch 결과를 쓰지 않는다.
 - 라우트 핸들러 응답: 본문 없을 땐 `new Response(null, { status: 204 })`.
 - 메타데이터는 정적 export 또는 `generateMetadata`. SEO 관련 변경 시 `sitemap.ts`, `robots.ts`, `opengraph-image.tsx`도 같이 점검.
 
