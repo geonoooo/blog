@@ -23,6 +23,7 @@ export function PostCategoryBadge({ category, asLink = false, className }: PostC
     return (
       <Link
         href={buildPostsHref({ categories: [category] })}
+        prefetch={false}
         data-category={category}
         className={classes}
       >

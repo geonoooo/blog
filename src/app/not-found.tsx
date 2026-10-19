@@ -22,6 +22,7 @@ export default function NotFound() {
       </p>
       <Link
         href="/"
+        prefetch={false}
         className="border-border text-foreground hover:border-foreground focus-visible:ring-ring focus-visible:ring-offset-background mt-8 rounded-full border px-5 py-2 text-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
       >
         글 목록으로

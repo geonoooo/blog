@@ -52,6 +52,7 @@ export function PostSortMenu({ query }: PostSortMenuProps) {
               <Link
                 key={option.value}
                 href={buildPostsHref({ ...query, sort: option.value, page: 1 })}
+                prefetch={false}
                 onClick={() => setIsOpen(false)}
                 aria-current={isActive ? "true" : undefined}
                 className={cn(
