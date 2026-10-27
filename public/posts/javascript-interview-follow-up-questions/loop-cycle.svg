@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="276" viewBox="0 0 720 276" role="img" aria-labelledby="cycle-title">
+  <title id="cycle-title">브라우저 이벤트 루프 한 바퀴: 태스크 하나, 마이크로태스크 전부, 필요하면 렌더링, 다시 처음으로</title>
+  <defs>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif; font-size: 14px; fill: #e1e4e8; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; }
+      .muted { fill: #b1bac4; }
+      .small { font-size: 13px; }
+      .bold { font-weight: 700; }
+      .head { font-size: 15px; font-weight: 700; }
+      .title { font-size: 17px; font-weight: 700; }
+      .line { stroke: #b1bac4; stroke-width: 1.5; fill: none; }
+    </style>
+    <marker id="cycle-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#b1bac4" />
+    </marker>
+  </defs>
+
+  <rect width="720" height="276" rx="12" fill="#24292e" />
+  <text x="24" y="34" class="title">브라우저 이벤트 루프 한 바퀴</text>
+
+  <!-- ① 태스크 -->
+  <rect x="24" y="56" width="208" height="160" rx="10" fill="#79b8ff" fill-opacity="0.08" stroke="#79b8ff" stroke-width="1.5" />
+  <text x="40" y="84" class="head">① 태스크 하나</text>
+  <text x="40" y="110" class="small muted">태스크 큐에서 가장 오래된</text>
+  <text x="40" y="130" class="small muted">것 하나만 꺼내 실행</text>
+  <rect x="40" y="148" width="176" height="26" rx="5" fill="#79b8ff" fill-opacity="0.16" stroke="#79b8ff" />
+  <text x="128" y="166" text-anchor="middle" class="mono">setTimeout 콜백</text>
+  <rect x="40" y="180" width="176" height="26" rx="5" fill="#79b8ff" fill-opacity="0.16" stroke="#79b8ff" />
+  <text x="128" y="198" text-anchor="middle" class="mono">click 리스너</text>
+
+  <path d="M232,136 H254" class="line" marker-end="url(#cycle-arrow)" />
+
+  <!-- ② 마이크로태스크 -->
+  <rect x="256" y="56" width="208" height="160" rx="10" fill="#ffab70" fill-opacity="0.08" stroke="#ffab70" stroke-width="1.5" />
+  <text x="272" y="84" class="head">② 마이크로태스크 전부</text>
+  <text x="272" y="110" class="small muted">큐가 빌 때까지 실행.</text>
+  <text x="272" y="130" class="small muted">실행 중 추가된 것도 포함</text>
+  <rect x="272" y="148" width="176" height="26" rx="5" fill="#ffab70" fill-opacity="0.16" stroke="#ffab70" />
+  <text x="360" y="166" text-anchor="middle" class="mono">then 콜백</text>
+  <rect x="272" y="180" width="176" height="26" rx="5" fill="#ffab70" fill-opacity="0.16" stroke="#ffab70" />
+  <text x="360" y="198" text-anchor="middle" class="mono">await 이후 코드</text>
+
+  <path d="M464,136 H486" class="line" marker-end="url(#cycle-arrow)" />
+
+  <!-- ③ 렌더링 -->
+  <rect x="488" y="56" width="208" height="160" rx="10" fill="#f778ba" fill-opacity="0.08" stroke="#f778ba" stroke-width="1.5" />
+  <text x="504" y="84" class="head">③ 렌더링 (필요할 때)</text>
+  <text x="504" y="110" class="small muted">화면을 갱신할 차례일 때만.</text>
+  <text x="504" y="130" class="small muted">이 순서로 진행</text>
+  <rect x="504" y="148" width="176" height="26" rx="5" fill="#f778ba" fill-opacity="0.16" stroke="#f778ba" />
+  <text x="592" y="166" text-anchor="middle" class="mono">requestAnimationFrame</text>
+  <rect x="504" y="180" width="176" height="26" rx="5" fill="#f778ba" fill-opacity="0.16" stroke="#f778ba" />
+  <text x="592" y="198" text-anchor="middle" class="small">스타일 → 레이아웃 → 페인트</text>
+
+  <!-- 다음 바퀴 -->
+  <path d="M592,216 V242 H128 V218" class="line" marker-end="url(#cycle-arrow)" />
+  <text x="360" y="262" text-anchor="middle" class="small muted">다음 바퀴: 다시 ①부터</text>
+</svg>

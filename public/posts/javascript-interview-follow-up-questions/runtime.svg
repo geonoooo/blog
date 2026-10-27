@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="496" viewBox="0 0 720 496" role="img" aria-labelledby="runtime-title">
+  <title id="runtime-title">브라우저에서 비동기 콜백이 실행되기까지: 콜 스택, Web API, 마이크로태스크 큐, 태스크 큐, 이벤트 루프</title>
+  <defs>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif; font-size: 14px; fill: #e1e4e8; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; }
+      .muted { fill: #b1bac4; }
+      .small { font-size: 12.5px; }
+      .bold { font-weight: 700; }
+      .title { font-size: 17px; font-weight: 700; }
+      .line { stroke: #b1bac4; stroke-width: 1.5; fill: none; }
+    </style>
+    <marker id="runtime-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#b1bac4" />
+    </marker>
+  </defs>
+
+  <rect width="720" height="496" rx="12" fill="#24292e" />
+  <text x="24" y="34" class="title">브라우저에서 비동기 콜백이 실행되기까지</text>
+
+  <!-- 자바스크립트 엔진 -->
+  <rect x="60" y="52" width="284" height="248" rx="10" fill="none" stroke="#444d56" />
+  <text x="76" y="76" class="muted small">자바스크립트 엔진</text>
+  <rect x="76" y="88" width="252" height="166" rx="8" fill="#2f363d" stroke="#444d56" />
+  <text x="92" y="113" class="bold">콜 스택</text>
+  <text x="150" y="113" class="muted small">한 번에 하나만 실행</text>
+  <rect x="92" y="146" width="220" height="28" rx="5" fill="#383f47" stroke="#586069" />
+  <text x="104" y="165" class="mono">setTimeout(cb, 0)</text>
+  <rect x="92" y="180" width="220" height="28" rx="5" fill="#383f47" stroke="#586069" />
+  <text x="104" y="199" class="mono">first()</text>
+  <rect x="92" y="214" width="220" height="28" rx="5" fill="#383f47" stroke="#586069" />
+  <text x="104" y="233" class="small">전역 코드</text>
+  <rect x="76" y="262" width="252" height="28" rx="6" fill="#2f363d" stroke="#444d56" />
+  <text x="92" y="281" class="muted small">힙 — 객체, 클로저가 잡은 환경</text>
+
+  <!-- 호스트 환경 -->
+  <rect x="404" y="52" width="292" height="248" rx="10" fill="none" stroke="#444d56" />
+  <text x="420" y="76" class="muted small">호스트 환경 (브라우저 Web API)</text>
+  <rect x="420" y="88" width="260" height="52" rx="8" fill="#2f363d" stroke="#959da5" />
+  <text x="436" y="110" class="bold">타이머</text>
+  <text x="436" y="129" class="mono small muted">setTimeout, setInterval</text>
+  <rect x="420" y="150" width="260" height="52" rx="8" fill="#2f363d" stroke="#959da5" />
+  <text x="436" y="172" class="bold">네트워크</text>
+  <text x="436" y="191" class="mono small muted">fetch, XMLHttpRequest</text>
+  <rect x="420" y="212" width="260" height="52" rx="8" fill="#2f363d" stroke="#959da5" />
+  <text x="436" y="234" class="bold">DOM 이벤트</text>
+  <text x="436" y="253" class="mono small muted">click, input, scroll</text>
+  <text x="420" y="287" class="muted small">기다리는 동안 콜 스택을 쓰지 않는다</text>
+
+  <!-- ① 등록 -->
+  <path d="M312,160 H374 V114 H416" class="line" marker-end="url(#runtime-arrow)" />
+  <text x="374" y="104" text-anchor="middle" class="small bold">① 등록</text>
+
+  <!-- Promise → 마이크로태스크 큐 -->
+  <path d="M202,300 V332" class="line" marker-end="url(#runtime-arrow)" />
+  <text x="212" y="322" class="small">Promise 이행 → then 콜백을 넣음</text>
+
+  <!-- ② 완료 → 태스크 큐 -->
+  <path d="M550,300 V332" class="line" marker-end="url(#runtime-arrow)" />
+  <text x="560" y="322" class="small">② 끝나면 콜백을 넣음</text>
+
+  <!-- 마이크로태스크 큐 -->
+  <rect x="60" y="336" width="300" height="96" rx="10" fill="#ffab70" fill-opacity="0.08" stroke="#ffab70" stroke-width="1.5" />
+  <text x="76" y="360" class="bold">마이크로태스크 큐</text>
+  <text x="76" y="380" class="muted small">빌 때까지 전부 실행</text>
+  <rect x="76" y="392" width="120" height="28" rx="5" fill="#ffab70" fill-opacity="0.16" stroke="#ffab70" />
+  <text x="136" y="411" text-anchor="middle" class="mono">then 콜백</text>
+  <rect x="204" y="392" width="120" height="28" rx="5" fill="#ffab70" fill-opacity="0.16" stroke="#ffab70" />
+  <text x="264" y="411" text-anchor="middle" class="mono">await 이후</text>
+
+  <!-- 태스크 큐 -->
+  <rect x="380" y="336" width="316" height="96" rx="10" fill="#79b8ff" fill-opacity="0.08" stroke="#79b8ff" stroke-width="1.5" />
+  <text x="396" y="360" class="bold">태스크 큐</text>
+  <text x="396" y="380" class="muted small">한 바퀴에 하나만 실행</text>
+  <rect x="396" y="392" width="140" height="28" rx="5" fill="#79b8ff" fill-opacity="0.16" stroke="#79b8ff" />
+  <text x="466" y="411" text-anchor="middle" class="mono">setTimeout 콜백</text>
+  <rect x="544" y="392" width="136" height="28" rx="5" fill="#79b8ff" fill-opacity="0.16" stroke="#79b8ff" />
+  <text x="612" y="411" text-anchor="middle" class="mono">click 콜백</text>
+
+  <!-- ③ 이벤트 루프 -->
+  <path d="M210,432 V456" class="line" />
+  <path d="M538,432 V456" class="line" />
+  <path d="M538,456 H36 V171 H74" class="line" marker-end="url(#runtime-arrow)" />
+  <circle cx="210" cy="456" r="3.5" fill="#b1bac4" />
+  <circle cx="538" cy="456" r="3.5" fill="#b1bac4" />
+  <text x="218" y="450" class="muted small">먼저</text>
+  <text x="546" y="450" class="muted small">그다음</text>
+  <text x="36" y="480" class="small"><tspan class="bold">③ 이벤트 루프</tspan> — 콜 스택이 비면 마이크로태스크 큐를 전부 비우고, 태스크를 하나 꺼내 올린다</text>
+</svg>

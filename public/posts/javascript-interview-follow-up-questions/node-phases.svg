@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="300" viewBox="0 0 720 300" role="img" aria-labelledby="node-title">
+  <title id="node-title">Node.js 이벤트 루프 단계: timers, pending callbacks, poll, check, close callbacks 순서로 돌고, 콜백 하나가 끝날 때마다 process.nextTick 큐와 Promise 마이크로태스크 큐를 비운다</title>
+  <defs>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif; font-size: 13px; fill: #e1e4e8; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; }
+      .phase { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 14px; font-weight: 700; }
+      .muted { fill: #b1bac4; }
+      .small { font-size: 12.5px; }
+      .head { font-size: 14px; font-weight: 700; }
+      .title { font-size: 17px; font-weight: 700; }
+      .task { fill: #79b8ff; fill-opacity: 0.1; stroke: #79b8ff; stroke-width: 1.5; }
+      .micro { fill: #ffab70; fill-opacity: 0.16; stroke: #ffab70; }
+      .neutral { fill: #383f47; stroke: #586069; }
+      .line { stroke: #b1bac4; stroke-width: 1.5; fill: none; }
+    </style>
+    <marker id="node-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#b1bac4" />
+    </marker>
+  </defs>
+
+  <rect width="720" height="300" rx="12" fill="#24292e" />
+  <text x="24" y="34" class="title">Node.js 이벤트 루프 단계 (libuv)</text>
+
+  <!-- 단계 -->
+  <rect x="24" y="56" width="120" height="64" rx="8" class="task" />
+  <text x="84" y="83" text-anchor="middle" class="phase">timers</text>
+  <text x="84" y="105" text-anchor="middle" class="small muted">만료된 타이머</text>
+  <path d="M144,88 H162" class="line" marker-end="url(#node-arrow)" />
+
+  <rect x="164" y="56" width="120" height="64" rx="8" class="task" />
+  <text x="224" y="83" text-anchor="middle" class="phase">pending</text>
+  <text x="224" y="105" text-anchor="middle" class="small muted">미뤄진 I/O</text>
+  <path d="M284,88 H302" class="line" marker-end="url(#node-arrow)" />
+
+  <rect x="304" y="56" width="120" height="64" rx="8" class="task" />
+  <text x="364" y="83" text-anchor="middle" class="phase">poll</text>
+  <text x="364" y="105" text-anchor="middle" class="small muted">I/O 콜백</text>
+  <path d="M424,88 H442" class="line" marker-end="url(#node-arrow)" />
+
+  <rect x="444" y="56" width="120" height="64" rx="8" class="task" />
+  <text x="504" y="83" text-anchor="middle" class="phase">check</text>
+  <text x="504" y="105" text-anchor="middle" class="small mono muted">setImmediate</text>
+  <path d="M564,88 H582" class="line" marker-end="url(#node-arrow)" />
+
+  <rect x="584" y="56" width="120" height="64" rx="8" class="task" />
+  <text x="644" y="83" text-anchor="middle" class="phase">close</text>
+  <text x="644" y="105" text-anchor="middle" class="small muted">close 콜백</text>
+
+  <path d="M644,120 V146 H84 V122" class="line" marker-end="url(#node-arrow)" />
+  <text x="364" y="166" text-anchor="middle" class="small muted">다음 바퀴</text>
+
+  <!-- 콜백 사이 -->
+  <rect x="24" y="184" width="680" height="100" rx="10" fill="#2f363d" stroke="#444d56" />
+  <text x="40" y="208" class="head">각 단계 안에서 콜백 하나가 끝날 때마다 (Node 11부터)</text>
+  <rect x="40" y="222" width="104" height="30" rx="5" class="neutral" />
+  <text x="92" y="242" text-anchor="middle">콜백 하나</text>
+  <path d="M144,237 H164" class="line" marker-end="url(#node-arrow)" />
+  <rect x="166" y="222" width="200" height="30" rx="5" class="micro" />
+  <text x="266" y="242" text-anchor="middle" class="mono">process.nextTick 큐 전부</text>
+  <path d="M366,237 H386" class="line" marker-end="url(#node-arrow)" />
+  <rect x="388" y="222" width="204" height="30" rx="5" class="micro" />
+  <text x="490" y="242" text-anchor="middle">Promise 마이크로태스크 전부</text>
+  <path d="M592,237 H612" class="line" marker-end="url(#node-arrow)" />
+  <rect x="614" y="222" width="76" height="30" rx="5" class="neutral" />
+  <text x="652" y="242" text-anchor="middle">다음 콜백</text>
+  <text x="40" y="274" class="small muted">nextTick 큐가 Promise 큐보다 먼저 비워진다 (CommonJS 기준)</text>
+</svg>

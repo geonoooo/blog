@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="290" viewBox="0 0 720 290" role="img" aria-labelledby="call-stack-title">
+  <title id="call-stack-title">함수 a, b, c를 호출할 때 콜 스택이 바뀌는 순서</title>
+  <defs>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif; font-size: 13px; fill: #e1e4e8; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+      .muted { fill: #b1bac4; }
+      .small { font-size: 12px; }
+      .head { font-size: 13.5px; font-weight: 700; }
+      .title { font-size: 17px; font-weight: 700; }
+      .cell { fill: #2f363d; stroke: #444d56; }
+      .frame { fill: #383f47; stroke: #586069; }
+      .active { fill: #79b8ff; fill-opacity: 0.16; stroke: #79b8ff; }
+      .gone { fill: none; stroke: #586069; stroke-dasharray: 4 3; }
+    </style>
+  </defs>
+
+  <rect width="720" height="290" rx="12" fill="#24292e" />
+  <text x="24" y="34" class="title">콜 스택 변화</text>
+
+  <!-- ① 시작 -->
+  <text x="68" y="64" text-anchor="middle" class="head">① 시작</text>
+  <text x="68" y="82" text-anchor="middle" class="small muted">전역 코드 실행</text>
+  <rect x="24" y="94" width="88" height="106" rx="8" class="cell" />
+  <rect x="32" y="166" width="72" height="26" rx="5" class="active" />
+  <text x="68" y="184" text-anchor="middle" class="small">전역</text>
+
+  <!-- ② a() 호출 -->
+  <text x="166" y="64" text-anchor="middle" class="head">② a() 호출</text>
+  <text x="166" y="82" text-anchor="middle" class="small muted">a가 올라감</text>
+  <rect x="122" y="94" width="88" height="106" rx="8" class="cell" />
+  <rect x="130" y="134" width="72" height="26" rx="5" class="active" />
+  <text x="166" y="152" text-anchor="middle" class="mono">a</text>
+  <rect x="130" y="166" width="72" height="26" rx="5" class="frame" />
+  <text x="166" y="184" text-anchor="middle" class="small">전역</text>
+
+  <!-- ③ b() 호출 -->
+  <text x="264" y="64" text-anchor="middle" class="head">③ b() 호출</text>
+  <text x="264" y="82" text-anchor="middle" class="small muted">b가 올라감</text>
+  <rect x="220" y="94" width="88" height="106" rx="8" class="cell" />
+  <rect x="228" y="102" width="72" height="26" rx="5" class="active" />
+  <text x="264" y="120" text-anchor="middle" class="mono">b</text>
+  <rect x="228" y="134" width="72" height="26" rx="5" class="frame" />
+  <text x="264" y="152" text-anchor="middle" class="mono">a</text>
+  <rect x="228" y="166" width="72" height="26" rx="5" class="frame" />
+  <text x="264" y="184" text-anchor="middle" class="small">전역</text>
+
+  <!-- ④ b 끝 -->
+  <text x="362" y="64" text-anchor="middle" class="head">④ b 끝</text>
+  <text x="362" y="82" text-anchor="middle" class="small muted">b가 빠짐</text>
+  <rect x="318" y="94" width="88" height="106" rx="8" class="cell" />
+  <rect x="326" y="102" width="72" height="26" rx="5" class="gone" />
+  <text x="362" y="120" text-anchor="middle" class="mono muted">b</text>
+  <rect x="326" y="134" width="72" height="26" rx="5" class="active" />
+  <text x="362" y="152" text-anchor="middle" class="mono">a</text>
+  <rect x="326" y="166" width="72" height="26" rx="5" class="frame" />
+  <text x="362" y="184" text-anchor="middle" class="small">전역</text>
+
+  <!-- ⑤ c() 호출 -->
+  <text x="460" y="64" text-anchor="middle" class="head">⑤ c() 호출</text>
+  <text x="460" y="82" text-anchor="middle" class="small muted">c가 올라감</text>
+  <rect x="416" y="94" width="88" height="106" rx="8" class="cell" />
+  <rect x="424" y="102" width="72" height="26" rx="5" class="active" />
+  <text x="460" y="120" text-anchor="middle" class="mono">c</text>
+  <rect x="424" y="134" width="72" height="26" rx="5" class="frame" />
+  <text x="460" y="152" text-anchor="middle" class="mono">a</text>
+  <rect x="424" y="166" width="72" height="26" rx="5" class="frame" />
+  <text x="460" y="184" text-anchor="middle" class="small">전역</text>
+
+  <!-- ⑥ c 끝 -->
+  <text x="558" y="64" text-anchor="middle" class="head">⑥ c 끝</text>
+  <text x="558" y="82" text-anchor="middle" class="small muted">c가 빠짐</text>
+  <rect x="514" y="94" width="88" height="106" rx="8" class="cell" />
+  <rect x="522" y="102" width="72" height="26" rx="5" class="gone" />
+  <text x="558" y="120" text-anchor="middle" class="mono muted">c</text>
+  <rect x="522" y="134" width="72" height="26" rx="5" class="active" />
+  <text x="558" y="152" text-anchor="middle" class="mono">a</text>
+  <rect x="522" y="166" width="72" height="26" rx="5" class="frame" />
+  <text x="558" y="184" text-anchor="middle" class="small">전역</text>
+
+  <!-- ⑦ a 끝 -->
+  <text x="656" y="64" text-anchor="middle" class="head">⑦ a 끝</text>
+  <text x="656" y="82" text-anchor="middle" class="small muted">a가 빠짐</text>
+  <rect x="612" y="94" width="88" height="106" rx="8" class="cell" />
+  <rect x="620" y="134" width="72" height="26" rx="5" class="gone" />
+  <text x="656" y="152" text-anchor="middle" class="mono muted">a</text>
+  <rect x="620" y="166" width="72" height="26" rx="5" class="active" />
+  <text x="656" y="184" text-anchor="middle" class="small">전역</text>
+
+  <!-- 범례 -->
+  <rect x="24" y="222" width="28" height="16" rx="4" class="active" />
+  <text x="60" y="235" class="small muted">맨 위, 지금 실행 중</text>
+  <rect x="210" y="222" width="28" height="16" rx="4" class="gone" />
+  <text x="246" y="235" class="small muted">끝나서 빠진 컨텍스트</text>
+
+  <text x="24" y="270" class="small muted">컨텍스트는 a, b, c 세 개가 만들어졌지만 b와 c가 콜 스택에 함께 있었던 적은 없다</text>
+</svg>
