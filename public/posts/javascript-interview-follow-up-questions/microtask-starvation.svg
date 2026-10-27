@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="280" viewBox="0 0 720 280" role="img" aria-labelledby="starvation-title">
+  <title id="starvation-title">Promise.then 재귀는 마이크로태스크가 끝없이 이어져 렌더링 차례가 오지 않고, setTimeout 재귀는 태스크 사이에 렌더링과 다른 이벤트가 실행된다</title>
+  <defs>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif; font-size: 13px; fill: #e1e4e8; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+      .code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 14px; font-weight: 700; }
+      .muted { fill: #b1bac4; }
+      .small { font-size: 12.5px; }
+      .title { font-size: 17px; font-weight: 700; }
+      .task { fill: #79b8ff; fill-opacity: 0.16; stroke: #79b8ff; }
+      .micro { fill: #ffab70; fill-opacity: 0.16; stroke: #ffab70; }
+      .render { fill: #f778ba; fill-opacity: 0.16; stroke: #f778ba; }
+    </style>
+  </defs>
+
+  <rect width="720" height="280" rx="12" fill="#24292e" />
+  <text x="24" y="34" class="title">같은 재귀, 다른 큐</text>
+
+  <!-- 범례 -->
+  <rect x="440" y="22" width="12" height="12" rx="2" class="task" />
+  <text x="458" y="33" class="small">태스크</text>
+  <rect x="510" y="22" width="12" height="12" rx="2" class="micro" />
+  <text x="528" y="33" class="small">마이크로태스크</text>
+  <rect x="626" y="22" width="12" height="12" rx="2" class="render" />
+  <text x="644" y="33" class="small">렌더링</text>
+
+  <!-- A. Promise.then 재귀 -->
+  <text x="24" y="78" class="code">Promise.resolve().then(loop)</text>
+  <rect x="24" y="92" width="56" height="30" rx="4" class="task" />
+  <text x="52" y="112" text-anchor="middle" class="mono">loop</text>
+  <rect x="82" y="92" width="34" height="30" rx="4" class="micro" />
+  <rect x="118" y="92" width="34" height="30" rx="4" class="micro" />
+  <rect x="154" y="92" width="34" height="30" rx="4" class="micro" />
+  <rect x="190" y="92" width="34" height="30" rx="4" class="micro" />
+  <rect x="226" y="92" width="34" height="30" rx="4" class="micro" />
+  <rect x="262" y="92" width="34" height="30" rx="4" class="micro" />
+  <rect x="298" y="92" width="34" height="30" rx="4" class="micro" />
+  <rect x="334" y="92" width="34" height="30" rx="4" class="micro" />
+  <rect x="370" y="92" width="34" height="30" rx="4" class="micro" />
+  <rect x="406" y="92" width="34" height="30" rx="4" class="micro" />
+  <rect x="442" y="92" width="34" height="30" rx="4" class="micro" />
+  <rect x="478" y="92" width="34" height="30" rx="4" class="micro" />
+  <rect x="514" y="92" width="34" height="30" rx="4" class="micro" />
+  <rect x="550" y="92" width="34" height="30" rx="4" class="micro" />
+  <rect x="586" y="92" width="34" height="30" rx="4" class="micro" />
+  <text x="632" y="112" class="small muted">… 계속</text>
+  <text x="24" y="148" class="small muted">마이크로태스크 큐가 비지 않아 렌더링과 다음 태스크로 넘어가지 못한다. 화면이 멈춘다</text>
+
+  <!-- B. setTimeout 재귀 -->
+  <text x="24" y="192" class="code">setTimeout(loop)</text>
+  <rect x="24" y="206" width="56" height="30" rx="4" class="task" />
+  <text x="52" y="226" text-anchor="middle" class="mono">loop</text>
+  <rect x="82" y="206" width="44" height="30" rx="4" class="render" />
+  <text x="104" y="226" text-anchor="middle" class="small">렌더</text>
+  <rect x="128" y="206" width="56" height="30" rx="4" class="task" />
+  <text x="156" y="226" text-anchor="middle" class="mono">loop</text>
+  <rect x="186" y="206" width="56" height="30" rx="4" class="task" />
+  <text x="214" y="226" text-anchor="middle" class="mono">click</text>
+  <rect x="244" y="206" width="56" height="30" rx="4" class="task" />
+  <text x="272" y="226" text-anchor="middle" class="mono">loop</text>
+  <rect x="302" y="206" width="44" height="30" rx="4" class="render" />
+  <text x="324" y="226" text-anchor="middle" class="small">렌더</text>
+  <rect x="348" y="206" width="56" height="30" rx="4" class="task" />
+  <text x="376" y="226" text-anchor="middle" class="mono">loop</text>
+  <rect x="406" y="206" width="56" height="30" rx="4" class="task" />
+  <text x="434" y="226" text-anchor="middle" class="mono">loop</text>
+  <rect x="464" y="206" width="44" height="30" rx="4" class="render" />
+  <text x="486" y="226" text-anchor="middle" class="small">렌더</text>
+  <rect x="510" y="206" width="56" height="30" rx="4" class="task" />
+  <text x="538" y="226" text-anchor="middle" class="mono">loop</text>
+  <rect x="568" y="206" width="56" height="30" rx="4" class="task" />
+  <text x="596" y="226" text-anchor="middle" class="mono">input</text>
+  <text x="632" y="226" class="small muted">… 계속</text>
+  <text x="24" y="262" class="small muted">호출마다 별도 태스크라서 그 사이에 렌더링과 다른 이벤트가 실행된다</text>
+</svg>

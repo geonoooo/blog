@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="364" viewBox="0 0 720 364" role="img" aria-labelledby="listener-title">
+  <title id="listener-title">사용자 클릭은 리스너마다 콜 스택이 비어 마이크로태스크가 사이에 실행되고, button.click() 호출은 호출한 스크립트가 남아 있어 리스너가 모두 끝난 뒤에 실행된다</title>
+  <defs>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif; font-size: 13px; fill: #e1e4e8; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; }
+      .muted { fill: #b1bac4; }
+      .small { font-size: 12px; }
+      .bold { font-weight: 700; }
+      .head { font-size: 14.5px; font-weight: 700; }
+      .title { font-size: 17px; font-weight: 700; }
+      .listener { fill: #79b8ff; fill-opacity: 0.16; stroke: #79b8ff; }
+      .micro { fill: #ffab70; fill-opacity: 0.16; stroke: #ffab70; }
+      .script { fill: #383f47; stroke: #586069; }
+      .base { stroke: #586069; stroke-width: 1; }
+      .tick { stroke: #b1bac4; stroke-width: 1; }
+    </style>
+  </defs>
+
+  <rect width="720" height="364" rx="12" fill="#24292e" />
+  <text x="24" y="34" class="title">리스너 사이에 마이크로태스크가 실행되는 조건</text>
+
+  <!-- 범례 -->
+  <rect x="408" y="22" width="12" height="12" rx="2" class="listener" />
+  <text x="426" y="33" class="small">리스너</text>
+  <rect x="476" y="22" width="12" height="12" rx="2" class="micro" />
+  <text x="494" y="33" class="small">마이크로태스크</text>
+  <rect x="584" y="22" width="12" height="12" rx="2" class="script" />
+  <text x="602" y="33" class="small">호출한 스크립트</text>
+
+  <!-- A. 사용자 클릭 -->
+  <text x="24" y="78" class="head">사용자 클릭</text>
+  <text x="112" y="78" class="small muted">브라우저가 리스너를 하나씩 호출한다</text>
+  <rect x="24" y="96" width="140" height="30" rx="5" class="listener" />
+  <text x="94" y="116" text-anchor="middle" class="mono">listener 1</text>
+  <rect x="190" y="96" width="120" height="30" rx="5" class="micro" />
+  <text x="250" y="116" text-anchor="middle" class="mono">micro 1</text>
+  <rect x="322" y="96" width="140" height="30" rx="5" class="listener" />
+  <text x="392" y="116" text-anchor="middle" class="mono">listener 2</text>
+  <rect x="488" y="96" width="120" height="30" rx="5" class="micro" />
+  <text x="548" y="116" text-anchor="middle" class="mono">micro 2</text>
+  <line x1="24" y1="130" x2="696" y2="130" class="base" />
+  <line x1="177" y1="130" x2="177" y2="137" class="tick" />
+  <text x="177" y="152" text-anchor="middle" class="small muted">스택 빔</text>
+  <line x1="475" y1="130" x2="475" y2="137" class="tick" />
+  <text x="475" y="152" text-anchor="middle" class="small muted">스택 빔</text>
+  <text x="696" y="152" text-anchor="end" class="small muted">시간 →</text>
+  <text x="24" y="178" class="mono">listener 1 → micro 1 → listener 2 → micro 2</text>
+
+  <!-- B. button.click() -->
+  <text x="24" y="222" class="head">button.click() 호출</text>
+  <text x="170" y="222" class="small muted">click()을 부른 스크립트가 콜 스택에 남아 있다</text>
+  <rect x="40" y="232" width="140" height="30" rx="5" class="listener" />
+  <text x="110" y="252" text-anchor="middle" class="mono">listener 1</text>
+  <rect x="188" y="232" width="140" height="30" rx="5" class="listener" />
+  <text x="258" y="252" text-anchor="middle" class="mono">listener 2</text>
+  <rect x="24" y="266" width="320" height="30" rx="5" class="script" />
+  <text x="36" y="286" class="small">button.click()을 호출한 스크립트</text>
+  <rect x="370" y="266" width="120" height="30" rx="5" class="micro" />
+  <text x="430" y="286" text-anchor="middle" class="mono">micro 1</text>
+  <rect x="498" y="266" width="120" height="30" rx="5" class="micro" />
+  <text x="558" y="286" text-anchor="middle" class="mono">micro 2</text>
+  <line x1="24" y1="300" x2="696" y2="300" class="base" />
+  <line x1="357" y1="300" x2="357" y2="307" class="tick" />
+  <text x="357" y="322" text-anchor="middle" class="small muted">스택 빔</text>
+  <text x="696" y="322" text-anchor="end" class="small muted">시간 →</text>
+  <text x="24" y="348" class="mono">listener 1 → listener 2 → micro 1 → micro 2</text>
+</svg>

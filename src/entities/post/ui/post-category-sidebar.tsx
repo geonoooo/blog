@@ -33,6 +33,7 @@ export function PostCategorySidebar({ query, className }: PostCategorySidebarPro
             <Link
               key={category}
               href={toggleCategoryHref(query, category)}
+              prefetch={false}
               aria-current={isActive ? "true" : undefined}
               className={postChipClass(isActive, itemClass)}
             >
@@ -49,6 +50,7 @@ export function PostCategorySidebar({ query, className }: PostCategorySidebarPro
         {query.tag && (
           <Link
             href={buildPostsHref({ ...query, tag: null, page: 1 })}
+            prefetch={false}
             className={postChipClass(true, cn(itemClass, "gap-1.5"))}
           >
             #{query.tag}
@@ -60,6 +62,7 @@ export function PostCategorySidebar({ query, className }: PostCategorySidebarPro
         {hasFilter && (
           <Link
             href={POSTS_PATH}
+            prefetch={false}
             className="text-muted-foreground hover:text-foreground focus-visible:ring-ring focus-visible:ring-offset-background ml-1 rounded-full px-3 py-1.5 text-left text-sm underline underline-offset-4 transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none lg:mt-2 lg:ml-0"
           >
             재설정

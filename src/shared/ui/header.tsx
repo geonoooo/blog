@@ -17,6 +17,7 @@ export function Header() {
         <div className="flex items-center gap-6">
           <Link
             href="/"
+            prefetch={false}
             className="focus-visible:ring-ring focus-visible:ring-offset-background hover:text-muted-foreground rounded-sm transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
           >
             <Logo />

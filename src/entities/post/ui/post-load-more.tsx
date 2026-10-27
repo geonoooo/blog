@@ -18,6 +18,7 @@ export function PostLoadMore({ query, shown, total }: PostLoadMoreProps) {
       {shown < total && (
         <Link
           href={buildPostsHref({ ...query, page: query.page + 1 })}
+          prefetch={false}
           scroll={false}
           className="border-border text-foreground hover:bg-muted hover:border-muted-foreground/40 focus-visible:ring-ring focus-visible:ring-offset-background rounded-full border px-5 py-2 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none"
         >

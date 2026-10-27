@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="284" viewBox="0 0 720 284" role="img" aria-labelledby="long-task-title">
+  <title id="long-task-title">클릭부터 다음 페인트까지: 2000ms를 한 번에 계산하면 첫 페인트가 2000ms 뒤라 스피너가 그려지지 않고, 250ms 조각 8개로 나누면 바로 페인트되고 조각 사이마다 렌더링된다 (개념도)</title>
+  <defs>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif; font-size: 13px; fill: #e1e4e8; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; }
+      .muted { fill: #b1bac4; }
+      .small { font-size: 12.5px; }
+      .head { font-size: 14px; font-weight: 700; }
+      .title { font-size: 17px; font-weight: 700; }
+      .task { fill: #79b8ff; fill-opacity: 0.16; stroke: #79b8ff; }
+      .render { fill: #f778ba; fill-opacity: 0.4; stroke: #f778ba; }
+      .axis { stroke: #586069; stroke-width: 1; }
+    </style>
+  </defs>
+
+  <rect width="720" height="284" rx="12" fill="#24292e" />
+  <text x="24" y="34" class="title">클릭부터 다음 페인트까지 (개념도)</text>
+
+  <!-- 범례 -->
+  <rect x="404" y="22" width="12" height="12" rx="2" class="task" />
+  <text x="422" y="33" class="small">자바스크립트 실행</text>
+  <rect x="546" y="22" width="12" height="12" rx="2" class="render" />
+  <text x="564" y="33" class="small">렌더링·페인트</text>
+
+  <!-- A. 한 번에 계산 -->
+  <text x="24" y="88" class="head">한 번에</text>
+  <text x="24" y="106" class="small muted">동기 2000ms</text>
+  <rect x="120" y="74" width="480" height="32" rx="4" class="task" />
+  <text x="132" y="95" class="small">click 핸들러: 스피너 표시 → 계산 → 스피너 숨김</text>
+  <rect x="602" y="74" width="8" height="32" rx="2" class="render" />
+  <text x="120" y="128" class="small muted">첫 페인트가 약 2000ms 뒤. 그때는 이미 hidden = true라 스피너가 그려지지 않는다</text>
+
+  <!-- B. 나눠서 계산 -->
+  <text x="24" y="170" class="head">나눠서</text>
+  <text x="24" y="188" class="small muted">250ms × 8</text>
+  <rect x="120" y="156" width="6" height="32" rx="2" class="task" />
+  <rect x="128" y="156" width="6" height="32" rx="2" class="render" />
+  <rect x="136" y="156" width="60" height="32" rx="4" class="task" />
+  <text x="166" y="177" text-anchor="middle" class="mono">250ms</text>
+  <rect x="198" y="156" width="6" height="32" rx="2" class="render" />
+  <rect x="206" y="156" width="60" height="32" rx="4" class="task" />
+  <rect x="268" y="156" width="6" height="32" rx="2" class="render" />
+  <rect x="276" y="156" width="60" height="32" rx="4" class="task" />
+  <rect x="338" y="156" width="6" height="32" rx="2" class="render" />
+  <rect x="346" y="156" width="60" height="32" rx="4" class="task" />
+  <rect x="408" y="156" width="6" height="32" rx="2" class="render" />
+  <rect x="416" y="156" width="60" height="32" rx="4" class="task" />
+  <rect x="478" y="156" width="6" height="32" rx="2" class="render" />
+  <rect x="486" y="156" width="60" height="32" rx="4" class="task" />
+  <rect x="548" y="156" width="6" height="32" rx="2" class="render" />
+  <rect x="556" y="156" width="60" height="32" rx="4" class="task" />
+  <rect x="618" y="156" width="6" height="32" rx="2" class="render" />
+  <rect x="626" y="156" width="60" height="32" rx="4" class="task" />
+  <rect x="688" y="156" width="6" height="32" rx="2" class="render" />
+  <text x="120" y="210" class="small muted">핸들러가 바로 끝나서 스피너가 먼저 그려지고, 조각 사이마다 입력 처리와 렌더링이 들어간다</text>
+
+  <!-- 시간 축 -->
+  <line x1="120" y1="236" x2="696" y2="236" class="axis" />
+  <line x1="120" y1="236" x2="120" y2="242" class="axis" />
+  <line x1="240" y1="236" x2="240" y2="242" class="axis" />
+  <line x1="360" y1="236" x2="360" y2="242" class="axis" />
+  <line x1="480" y1="236" x2="480" y2="242" class="axis" />
+  <line x1="600" y1="236" x2="600" y2="242" class="axis" />
+  <text x="120" y="256" text-anchor="middle" class="small muted">0</text>
+  <text x="240" y="256" text-anchor="middle" class="small muted">500</text>
+  <text x="360" y="256" text-anchor="middle" class="small muted">1000</text>
+  <text x="480" y="256" text-anchor="middle" class="small muted">1500</text>
+  <text x="600" y="256" text-anchor="middle" class="small muted">2000ms</text>
+  <text x="24" y="256" class="small muted">클릭 후 경과</text>
+</svg>
