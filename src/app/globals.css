@@ -37,7 +37,8 @@
   /* 카테고리. 점과 배지 텍스트에 같은 값을 쓰므로 텍스트 기준(4.5:1)을 맞춘다.
      brand(hue 13) 주변의 붉은 영역은 비워둔다 — tooling이 쓰던 hue 350은 brand와
      23도밖에 안 떨어져서, brand가 비운 앰버 자리(hue 60)로 옮겼다.
-     이렇게 하면 brand 포함 6색이 최소 45도씩 벌어진다. 배경 대비 5.3~6.0:1 */
+     이렇게 하면 brand 포함 7색이 최소 45도씩 벌어진다. 배경 대비 5.3~6.0:1 */
+  --color-cat-javascript: oklch(0.5 0.105 105); /* sRGB 경계라 채도 제한 */
   --color-cat-backend: oklch(0.5 0.13 150);
   --color-cat-react: oklch(0.5 0.085 195); /* sRGB 경계라 채도 제한 */
   --color-cat-typescript: oklch(0.5 0.13 253);
@@ -67,6 +68,7 @@
   --color-ring: oklch(0.7 0.14 14);
 
   /* 8.9~10.2:1 */
+  --color-cat-javascript: oklch(0.78 0.13 105);
   --color-cat-backend: oklch(0.78 0.13 150);
   --color-cat-react: oklch(0.78 0.13 195);
   --color-cat-typescript: oklch(0.78 0.115 253);
@@ -261,8 +263,11 @@ figure[data-rehype-pretty-code-figure] [data-highlighted-line] {
   --alert-color: oklch(0.72 0.18 25);
 }
 
-/* 카테고리 배지. Tailwind 클래스를 5색×2속성으로 늘리는 대신
+/* 카테고리 배지. Tailwind 클래스를 6색×2속성으로 늘리는 대신
    data-category로 CSS 변수 하나만 갈아끼운다. */
+[data-category="javascript"] {
+  --cat: var(--color-cat-javascript);
+}
 [data-category="backend"] {
   --cat: var(--color-cat-backend);
 }
