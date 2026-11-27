@@ -250,6 +250,7 @@ const MOTIFS: Record<PostCover, ReactNode> = {
 
 /** frontmatter에 cover가 없는 글의 기본 모티프. */
 const CATEGORY_FALLBACK: Record<PostCategory, PostCover> = {
+  javascript: "layers",
   typescript: "mapping",
   "deep-dive": "tunnel",
   react: "layers",

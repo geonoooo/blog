@@ -1,0 +1,285 @@
+---
+title: "자바스크립트는 싱글 스레드인데 비동기 작업을 어떻게 처리할까?"
+summary: "싱글 스레드인 자바스크립트가 비동기 작업을 처리하는 구조를 콜 스택, 태스크 큐, 마이크로태스크 큐, 이벤트 루프로 정리합니다. setTimeout(fn, 0), 마이크로태스크 무한 루프, Node와의 차이, 출력 순서 문제까지 코드로 확인합니다."
+date: 2026-11-27
+category: "javascript"
+tags: ["javascript", "interview", "event-loop", "promise"]
+cover: "layers"
+draft: false
+---
+
+요즘 면접을 보러 다니면서 '와 말 진짜 못한다'라는 걸 느꼈습니다. 이게 말을 진짜 못하는건지, 대충 알아서 말로 표현을 잘 못하는 것인지.
+손짓과 눈짓으로 설명하고 있는 제가 진짜 알고있는게 맞나 의구심이 들었습니다. 코드로 짜면 맞게 동작하는데, 왜 그렇게 동작하는지 물어보면 문장이 나오지 않았습니다.
+
+면접이 끝나면 남는 생각은 늘 같았습니다 — "아, 그 말을 했어야 했는데." 첫 질문은 그럭저럭 넘겨도 "그럼 이건요?" 하고 꼬리질문이 붙으면 말이 길어졌습니다. 용어가 떠오르지 않아서입니다. TDZ 한 단어면 끝날 걸 "let으로 선언한 변수를 선언 전에 쓰면 에러가 나는 그 구간이..." 하고 한참 돌려 말했습니다. 결과는 또 탈락. ~~이번엔 다를 줄 알았습니다.~~
+
+이 글은 이벤트 루프에 대한 첫 질문과 답, 이어질 수 있는 꼬리질문과 답을 적었습니다.
+
+> [!NOTE] 기준
+> 언어 동작은 ECMAScript 표준, 브라우저 동작은 HTML 표준 기준입니다. 출력 순서를 적은 예제는 Node 24와 Chromium 155에서 실행해 확인했습니다. 따로 적지 않으면 ES 모듈(strict mode)에서 실행한다고 가정합니다.
+
+## 알아야 할 단어
+
+```yaml
+콜 스택: 지금 실행 중인 동기 코드
+마이크로태스크 큐: Promise.then 콜백, await 이후 코드, queueMicrotask
+태스크 큐: setTimeout, setInterval, 이벤트 콜백
+```
+
+## Q. 자바스크립트는 싱글 스레드인데 비동기 작업은 어떻게 처리하나요?
+
+**답변**
+
+싱글 스레드라는 건 자바스크립트 코드를 실행하는 콜 스택이 하나라는 뜻입니다. 타이머, 네트워크 요청, 이벤트 대기는 자바스크립트 엔진이 아니라 호스트 환경이 처리합니다. 브라우저에서는 Web API, Node에서는 libuv입니다.
+
+호스트는 작업이 끝나면 콜백을 큐에 넣습니다. 이벤트 루프는 콜 스택이 비었을 때 큐에서 콜백을 꺼내 콜 스택에 올립니다.
+
+콜 스택에 쌓이는 건 `setTimeout()`이나 `.then()`을 호출하는 실행 컨텍스트입니다. 이 호출은 콜백을 등록만 하고 바로 끝나서 콜 스택에서 빠집니다. 콜백은 나중에 큐에서 꺼내질 때 새 실행 컨텍스트로 콜 스택에 올라갑니다.
+
+![콜 스택이 setTimeout을 호스트의 타이머에 등록하고, 타이머가 끝나면 콜백이 태스크 큐에 들어간다. Promise가 이행되면 then 콜백은 마이크로태스크 큐에 들어간다. 이벤트 루프는 콜 스택이 비면 마이크로태스크 큐를 먼저 전부 비우고, 그다음 태스크를 하나 꺼내 콜 스택에 올린다.](/posts/javascript-event-loop/runtime.svg)
+
+MDN은 이 구조를 [JavaScript execution model](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Execution_model) 문서에서 설명합니다.
+
+이벤트 루프는 ECMAScript가 아니라 HTML 표준에 정의돼 있습니다. 브라우저 이벤트 루프의 한 바퀴는 이렇습니다.
+
+![1단계: 태스크 큐에서 가장 오래된 태스크 하나를 실행한다. 2단계: 마이크로태스크 큐가 빌 때까지 전부 실행한다. 실행 중 추가된 것도 포함한다. 3단계: 화면을 갱신할 차례면 requestAnimationFrame 콜백, 스타일, 레이아웃, 페인트 순서로 렌더링한다. 그다음 1단계로 돌아간다.](/posts/javascript-event-loop/loop-cycle.svg)
+
+큐는 두 종류입니다.
+
+| 구분           | 들어가는 것                                                                            | 한 바퀴에 실행되는 양 |
+| -------------- | -------------------------------------------------------------------------------------- | --------------------- |
+| 태스크         | `setTimeout`, `setInterval`, 이벤트 콜백, `MessageChannel`                             | 하나                  |
+| 마이크로태스크 | `then`/`catch`/`finally` 콜백, `await` 이후 코드, `queueMicrotask`, `MutationObserver` | 큐가 빌 때까지 전부   |
+
+흔히 쓰는 "매크로태스크"는 표준 용어가 아닙니다. 표준은 그냥 태스크라고 부릅니다. 태스크 큐는 하나가 아니라 출처(타이머, 사용자 입력, 네트워크)별로 여러 개일 수 있고, 어느 큐에서 먼저 꺼낼지는 브라우저가 정합니다. 마이크로태스크 큐는 하나입니다.
+
+콜백이 큐에 들어가기 전에 기다리는 곳은 API마다 다릅니다.
+
+| API          | 큐에 들어가기 전                                  | 큐에 들어가는 시점                      |
+| ------------ | ------------------------------------------------- | --------------------------------------- |
+| `setTimeout` | 호스트의 타이머                                   | 타이머가 끝날 때 (태스크 큐)            |
+| `.then`      | Promise 객체의 `[[PromiseFulfillReactions]]` 목록 | Promise가 이행될 때 (마이크로태스크 큐) |
+
+`setTimeout`은 호스트가 제공하는 API라서 콜백을 호스트가 들고 있습니다. Promise는 ECMAScript에 정의된 엔진 기능이라서 콜백이 엔진 힙에 있는 Promise 객체의 내부 슬롯에 들어 있습니다. 큐에 들어가는 건 Promise 객체가 아니라 `.then`에 넘긴 콜백입니다.
+
+ECMAScript 표준에서 `.then` 처리는 Promise 상태에 따라 갈립니다.
+
+- pending이면 콜백을 `[[PromiseFulfillReactions]]`에 추가합니다. 큐에는 아무것도 들어가지 않습니다.
+- 이미 fulfilled면 콜백을 실행할 작업을 바로 마이크로태스크 큐에 넣습니다.
+
+pending이던 Promise가 이행되면 엔진이 `[[PromiseFulfillReactions]]`의 콜백마다 작업을 만들어 마이크로태스크 큐에 넣고 목록을 비웁니다. 거부되면 `[[PromiseRejectReactions]]`가 같은 방식으로 처리됩니다. pending Promise를 `await`할 때도 재개 작업이 같은 목록에 들어갑니다.
+
+```js
+const p = new Promise((resolve) => {
+  setTimeout(() => {
+    resolve("done");
+    console.log("timer end");
+  }, 1000);
+});
+p.then((value) => console.log(value));
+console.log("script end");
+// script end → timer end → done
+```
+
+```yaml
+0ms: p는 pending. then 콜백은 p의 목록에, 타이머 콜백은 호스트의 타이머에 있다
+1000ms: 타이머 콜백이 태스크 큐에 들어가고 실행된다
+resolve("done"): p가 fulfilled가 되고 then 콜백이 마이크로태스크 큐로 옮겨진다
+timer end: resolve 뒤의 코드가 이어서 실행된다. then 콜백은 아직 큐에 있다
+태스크 끝: 콜 스택이 비어 then 콜백이 실행되고 done을 출력한다
+```
+
+`resolve()`는 콜백을 큐에 넣기만 하고 실행하지 않습니다. 그래서 `timer end`가 `done`보다 먼저 나옵니다.
+
+Node에서는 이 차이가 프로세스 종료 시점으로 드러납니다.
+
+```js
+// pending.mjs: 바로 종료된다. "then"은 출력되지 않는다
+new Promise(() => {}).then(() => console.log("then"));
+
+// timer.mjs: 1초 뒤 "timeout"을 출력하고 종료된다
+setTimeout(() => console.log("timeout"), 1000);
+```
+
+Node는 이벤트 루프에서 기다릴 타이머나 I/O가 남지 않으면 종료합니다. pending Promise의 콜백은 엔진의 객체 안에만 있어서 libuv는 그 콜백을 기다릴 대상으로 알지 못합니다. 타이머는 libuv가 들고 있으므로 끝날 때까지 프로세스가 유지됩니다.
+
+### 꼬리 1. `setTimeout(fn, 0)`은 0ms 뒤에 실행되나요?
+
+아닙니다. 0ms는 최소 대기 시간입니다. 타이머가 만료돼도 콜백은 태스크 큐에 들어갈 뿐이고, 지금 실행 중인 동기 코드와 그 뒤의 마이크로태스크가 모두 끝나야 실행됩니다. 앞에 다른 태스크가 쌓여 있으면 더 늦어집니다.
+
+여기에 두 가지가 더 붙습니다. HTML 표준은 `setTimeout`이 5단계를 넘게 중첩되면 대기 시간을 최소 4ms로 올립니다. 그리고 백그라운드 탭에서는 브라우저가 타이머를 1초 이상 간격으로 묶어서 실행합니다.
+
+중첩 제한은 Chromium 155에서 직접 재봤습니다. 콜백 안에서 다음 `setTimeout(fn, 0)`을 부르는 연쇄를 12번 이어가고, 호출 사이 간격을 `performance.now()`로 쟀습니다. 시행마다 `MessageChannel` 태스크에서 새로 시작해서 중첩 단계가 0부터 세어지게 했고, 40번 반복한 중앙값입니다.
+
+![연쇄 setTimeout(fn, 0)의 실제 대기 시간 막대 그래프. 1번째부터 6번째 호출은 0ms, 최대 0.2ms. 7번째부터 12번째 호출은 중앙값 4.5ms, 범위 4.1~4.7ms.](/posts/javascript-event-loop/timer-clamp.svg)
+
+6번째 호출까지는 0ms이고 7번째부터 4ms를 넘습니다. 7번째 호출은 6단계 중첩된 콜백 안에서 부른 것이라 "5단계 초과" 조건에 걸립니다.
+
+그래서 `setTimeout`이나 `setInterval`을 호출 횟수로 세는 타이머는 오차가 쌓입니다. 경과 시간은 매번 `performance.now()`나 `Date.now()`의 차이로 계산해야 합니다.
+
+### 꼬리 2. 마이크로태스크가 마이크로태스크를 계속 추가하면 어떻게 되나요?
+
+```js
+function loop() {
+  Promise.resolve().then(loop);
+}
+loop();
+```
+
+화면이 멈춥니다. 마이크로태스크 큐는 빌 때까지 실행하고, 실행 중에 새로 들어온 것도 같은 차례에 처리합니다. 큐가 비지 않으니 렌더링 단계와 다음 태스크로 넘어가지 못합니다. 클릭에도 반응하지 않습니다.
+
+같은 재귀를 `setTimeout(loop)`로 바꾸면 멈추지 않습니다. 호출마다 별도 태스크가 되므로 태스크 사이에 렌더링과 다른 이벤트가 실행될 수 있습니다.
+
+![Promise.resolve().then(loop) 재귀는 첫 태스크 뒤에 마이크로태스크가 끝없이 이어져 렌더링과 다음 태스크 차례가 오지 않는다. setTimeout(loop) 재귀는 loop 태스크 사이에 렌더링, click, input 같은 다른 태스크가 끼어든다.](/posts/javascript-event-loop/microtask-starvation.svg)
+
+### 꼬리 3. 마이크로태스크는 태스크가 끝날 때만 실행되나요?
+
+정확히는 **콜 스택이 빌 때마다** 실행됩니다. 차이가 드러나는 예가 있습니다.
+
+```js
+button.addEventListener("click", () => {
+  Promise.resolve().then(() => console.log("micro 1"));
+  console.log("listener 1");
+});
+button.addEventListener("click", () => {
+  Promise.resolve().then(() => console.log("micro 2"));
+  console.log("listener 2");
+});
+```
+
+클릭 이벤트 처리는 태스크 하나이고, 리스너 둘은 그 태스크 안에서 차례로 호출됩니다. 마이크로태스크 큐에 들어가는 건 리스너가 아니라 리스너 안의 `.then` 콜백입니다.
+
+사용자가 직접 클릭할 때와 코드에서 `button.click()`을 호출할 때 순서가 다릅니다.
+
+```yaml
+사용자 클릭: listener 1 → micro 1 → listener 2 → micro 2
+button.click(): listener 1 → listener 2 → micro 1 → micro 2
+```
+
+사용자 클릭은 브라우저가 리스너를 하나씩 호출하고, 리스너 하나가 끝날 때마다 콜 스택이 비므로 그 사이에 마이크로태스크가 실행됩니다. `button.click()`은 그 호출을 한 자바스크립트 코드가 아직 콜 스택에 남아 있어서 리스너 사이에 스택이 비지 않습니다. 마이크로태스크는 `click()`을 호출한 코드까지 끝난 뒤에 실행됩니다.
+
+![사용자 클릭에서는 listener 1이 끝나 콜 스택이 비면 micro 1이 실행되고, listener 2가 끝나면 micro 2가 실행된다. button.click() 호출에서는 click()을 부른 스크립트가 콜 스택 바닥에 남아 있어 listener 1과 listener 2가 그 위에서 연달아 실행되고, 스크립트가 끝나 스택이 빈 뒤에 micro 1과 micro 2가 실행된다.](/posts/javascript-event-loop/listener-microtask.svg)
+
+테스트 코드에서 `click()`으로 이벤트를 흉내 낼 때 실제 사용자 클릭과 순서가 달라지는 이유가 이것입니다.
+
+### 꼬리 4. 무거운 작업 때문에 화면이 멈추면 어떻게 하나요?
+
+```js
+button.addEventListener("click", () => {
+  spinner.hidden = false;
+  buildReport(); // 2초 걸리는 동기 계산
+  spinner.hidden = true;
+});
+```
+
+스피너는 한 번도 보이지 않습니다. 두 번의 DOM 변경이 같은 태스크 안에서 일어나고, 렌더링은 태스크가 끝난 뒤에 일어납니다. 렌더링 시점에는 이미 `hidden = true`입니다. 2초 동안 클릭이나 스크롤에도 반응하지 않습니다.
+
+방법은 세 가지입니다.
+
+1. **작업을 쪼개고 태스크 사이에 양보한다.** 조각 사이에 태스크를 끊으면 그 틈에 렌더링과 입력 처리가 들어옵니다. `Promise.resolve()`로는 양보가 되지 않습니다. 마이크로태스크는 렌더링 전에 전부 실행되기 때문입니다.
+2. **Web Worker로 옮긴다.** 별도 스레드에서 실행되므로 메인 스레드가 막히지 않습니다. 대신 DOM에 접근할 수 없고, 데이터는 `postMessage`로 복사해서 주고받습니다.
+3. **계산량을 줄인다.** 메모이제이션, 가상 스크롤, 서버로 계산 옮기기.
+
+```js
+async function processInChunks(rows, handleRow, chunkSize = 500) {
+  for (let start = 0; start < rows.length; start += chunkSize) {
+    rows.slice(start, start + chunkSize).forEach(handleRow);
+    await new Promise((resolve) => setTimeout(resolve));
+  }
+}
+```
+
+한 번에 계산할 때와 나눠서 계산할 때 메인 스레드가 쓰이는 모양은 이렇게 다릅니다. 실측값이 아니라 개념도입니다.
+
+![한 번에 계산하면 click 핸들러가 2000ms 동안 메인 스레드를 잡고, 첫 페인트는 2000ms 뒤에 일어나며 그때는 스피너가 이미 숨겨져 있다. 250ms 조각 8개로 나누면 핸들러가 바로 끝나 스피너가 먼저 그려지고, 조각 사이마다 렌더링이 들어간다.](/posts/javascript-event-loop/long-task.svg)
+
+`scheduler.yield()`를 지원하는 브라우저에서는 `setTimeout` 대신 그걸 씁니다. 양보한 뒤 다른 태스크 뒤로 밀리지 않고 우선해서 재개됩니다. 지원 범위는 쓰기 전에 확인해야 합니다.
+
+Core Web Vitals의 INP(Interaction to Next Paint)가 이 문제를 잽니다. 사용자 입력부터 다음 페인트까지 걸린 시간이므로, 이벤트 핸들러가 메인 스레드를 오래 잡으면 수치가 그대로 나빠집니다. "INP를 개선해본 적 있나요?"로 이어질 수 있는 지점입니다.
+
+### 꼬리 5. Node.js의 이벤트 루프는 브라우저와 같나요?
+
+다릅니다. Node는 libuv가 이벤트 루프를 돌리고, 한 바퀴가 여러 단계(phase)로 나뉩니다.
+
+```yaml
+timers: 만료된 setTimeout, setInterval 콜백
+pending callbacks: 다음 바퀴로 미뤄진 일부 I/O 콜백
+poll: 새 I/O 이벤트를 가져와 I/O 콜백 실행
+check: setImmediate 콜백
+close callbacks: socket.on("close") 같은 종료 콜백
+```
+
+![Node.js 이벤트 루프는 timers, pending, poll, check, close 단계를 차례로 돌고 다시 timers로 돌아간다. 각 단계 안에서 콜백 하나가 끝날 때마다 process.nextTick 큐를 전부 비우고, 그다음 Promise 마이크로태스크를 전부 비운 뒤 다음 콜백으로 넘어간다.](/posts/javascript-event-loop/node-phases.svg)
+
+브라우저와 다른 점은 셋입니다.
+
+- `process.nextTick` 큐가 따로 있고, Promise 마이크로태스크보다 먼저 비워집니다.
+- `setImmediate`는 poll 단계 바로 뒤인 check 단계에서 실행됩니다. I/O 콜백 안에서 `setTimeout(fn, 0)`과 `setImmediate`를 같이 걸면 항상 `setImmediate`가 먼저입니다. 메인 모듈에서 걸면 순서가 보장되지 않습니다.
+- Node 11부터는 브라우저처럼 콜백 하나가 끝날 때마다 마이크로태스크를 비웁니다. 그전에는 같은 단계의 콜백을 전부 실행한 뒤에 비웠습니다.
+
+```js
+// Node, CommonJS
+Promise.resolve().then(() => console.log("promise"));
+process.nextTick(() => console.log("nextTick"));
+require("fs").readFile(__filename, () => {
+  setTimeout(() => console.log("timeout"), 0);
+  setImmediate(() => console.log("immediate"));
+});
+// nextTick → promise → immediate → timeout
+```
+
+## Q. 아래 코드의 출력 순서를 설명해주세요
+
+```js
+async function first() {
+  console.log("first start");
+  await second();
+  console.log("first end");
+}
+
+async function second() {
+  console.log("second");
+}
+
+console.log("script start");
+setTimeout(() => console.log("setTimeout"), 0);
+first();
+new Promise((resolve) => {
+  console.log("promise executor");
+  resolve();
+}).then(() => console.log("then"));
+console.log("script end");
+```
+
+**답변**
+
+```yaml
+동기: script start → first start → second → promise executor → script end
+마이크로태스크: first end → then
+태스크: setTimeout
+```
+
+한 줄씩 따라가면 이렇습니다.
+
+1. `script start`를 출력하고, `setTimeout` 콜백을 태스크 큐에 넣습니다.
+2. `first()`를 호출합니다. `first start`를 출력하고 `second()`를 호출해 `second`를 출력합니다. async 함수는 이미 이행된 Promise를 반환합니다.
+3. `await`이 그 Promise에 재개 작업을 걸고 `first`를 멈춥니다. Promise가 이미 이행돼 있으므로 재개 작업이 바로 마이크로태스크 큐에 들어갑니다. 제어는 `first()`를 호출한 쪽으로 돌아옵니다.
+4. `new Promise`에 넘긴 함수(executor)는 동기로 실행됩니다. `promise executor`를 출력하고 `resolve()`합니다. `.then`을 거는 시점에 이미 이행돼 있으므로 콜백이 마이크로태스크 큐에 들어갑니다. 큐는 `[first 재개, then 콜백]`입니다.
+5. `script end`를 출력합니다. 콜 스택이 비었으니 마이크로태스크를 순서대로 실행합니다. `first end`, `then`.
+6. 마지막으로 태스크 큐의 `setTimeout`.
+
+같은 과정을 네 시점의 큐 상태로 그리면 이렇습니다.
+
+![1. await 직후: 콜 스택에는 전역 코드만 남고, 마이크로태스크 큐에 first 재개, 태스크 큐에 setTimeout 콜백이 있다. 출력은 script start, first start, second. 2. 동기 코드 끝: 콜 스택이 비고, 마이크로태스크 큐에 first 재개와 then 콜백이 있다. 출력은 promise executor, script end. 3. 마이크로태스크 처리: first 재개와 then 콜백이 차례로 실행되고 큐가 빈다. 출력은 first end, then. 4. 태스크 처리: setTimeout 콜백이 실행된다. 출력은 setTimeout.](/posts/javascript-event-loop/order-trace.svg)
+
+### 꼬리 1. `first end`가 `then`보다 먼저 나오는 건 항상 그런가요?
+
+지금은 그렇지만 예전에는 아니었습니다. Chrome 72(V8 7.2) 이전에는 `await`이 넘겨받은 Promise를 한 번 더 감싸서 재개가 몇 틱 늦었고, `then`이 먼저 나왔습니다. 표준이 바뀌어 지금은 네이티브 Promise를 `await`하면 감싸지 않고 바로 재개 작업을 겁니다.
+
+다만 서로 다른 Promise 체인 사이의 실행 순서는 엔진 세부 구현에 가깝습니다. 실무 코드가 이 순서에 기대고 있다면 그 코드가 문제입니다. 순서가 중요하면 `await`으로 명시적으로 이어야 합니다.
+
+## 30초 답변
+
+콜 스택이 비면 태스크 하나, 마이크로태스크 전부, 렌더링 순서로 돈다.
+
+이어질 꼬리질문: `setTimeout(fn, 0)`, 마이크로태스크 무한 루프, Node 차이.

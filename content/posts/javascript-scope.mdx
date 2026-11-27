@@ -1,0 +1,115 @@
+---
+title: "자바스크립트 스코프, 함수 레벨과 블록 레벨은 어떻게 다를까?"
+summary: "자바스크립트가 쓰는 렉시컬 스코프와 함수 레벨, 블록 레벨 스코프의 차이를 정리합니다. for 문에서 let이 반복마다 새로 만들어지는 이유, var로 같은 결과를 내는 방법, 전역 var와 let의 차이까지 코드로 확인합니다."
+date: 2026-10-16
+category: "javascript"
+tags: ["javascript", "interview", "scope"]
+cover: "layers"
+draft: true
+---
+
+면접에서 말로 설명하지 못했던 자바스크립트 개념을 주제별로 다시 정리하고 있습니다. 이 글은 스코프에 대한 첫 질문과 답, 이어질 수 있는 꼬리질문과 답을 적었습니다.
+
+정리하게 된 이유는 [이벤트 루프 글](/posts/javascript-event-loop)에 적었습니다.
+
+> [!NOTE] 기준
+> 언어 동작은 ECMAScript 표준, 브라우저 동작은 HTML 표준 기준입니다. 출력 순서를 적은 예제는 Node 24와 Chromium 155에서 실행해 확인했습니다. 따로 적지 않으면 ES 모듈(strict mode)에서 실행한다고 가정합니다.
+
+## Q. 스코프가 무엇이고, 자바스크립트는 어떤 스코프를 쓰나요?
+
+**답변**
+
+스코프는 식별자를 참조할 수 있는 범위입니다. 자바스크립트는 렉시컬 스코프입니다. 함수의 바깥 스코프는 함수를 **어디서 호출했는지가 아니라 어디서 정의했는지**로 정해집니다.
+
+```js
+const level = "global";
+
+function printLevel() {
+  console.log(level);
+}
+
+function run() {
+  const level = "local";
+  printLevel();
+}
+
+run(); // global
+```
+
+호출한 위치로 정해지는 동적 스코프였다면 `local`이 나왔을 겁니다.
+
+구현으로 보면 이렇습니다. 함수 객체가 만들어질 때 그 시점의 LexicalEnvironment를 내부 슬롯 `[[Environment]]`에 저장합니다. 함수를 호출하면 새 Environment Record를 만들고, 그 바깥 참조를 `[[Environment]]`로 연결합니다. 호출한 위치는 이 연결에 관여하지 않습니다. 이 `[[Environment]]`가 [클로저](/posts/javascript-closure)의 근거입니다.
+
+## Q. 함수 레벨 스코프와 블록 레벨 스코프는 어떻게 다른가요?
+
+**답변**
+
+`var`는 함수 레벨 스코프입니다. 함수 본문만 스코프를 만들고 `if`, `for` 블록은 무시합니다. `let`, `const`, `class`는 블록 레벨 스코프입니다. 중괄호 블록마다 새 스코프가 생깁니다.
+
+```js
+function pickEnds(items) {
+  if (items.length > 0) {
+    var first = items[0];
+    let last = items.at(-1);
+  }
+  console.log(first); // 블록 밖에서도 보인다
+  console.log(last); // ReferenceError: last is not defined
+}
+```
+
+차이가 가장 크게 드러나는 건 반복문 안의 비동기 콜백입니다.
+
+```js
+for (var i = 0; i < 3; i++) {
+  setTimeout(() => console.log(i));
+}
+// 3, 3, 3
+
+for (let i = 0; i < 3; i++) {
+  setTimeout(() => console.log(i));
+}
+// 0, 1, 2
+```
+
+`var` 버전은 `i`가 함수 스코프에 하나뿐이고, 세 콜백이 같은 `i`를 봅니다. 콜백은 태스크로 실행되므로 그때는 반복문이 끝나 `i`가 3입니다. `let` 버전은 반복마다 새 환경이 만들어지고, 각 콜백이 자기 반복의 `i`를 봅니다.
+
+### 꼬리 1. `let`이 반복마다 새로 만들어진다면 `i++`는 이전 값을 어떻게 아나요?
+
+표준의 `CreatePerIterationEnvironment` 동작입니다. 본문 실행이 끝나면 새 환경을 만들고 직전 반복의 `i` 값을 복사한 다음, 증가식 `i++`를 새 환경에서 실행합니다. 그래서 반복마다 바인딩은 따로이고 값은 이어집니다.
+
+`const`는 일반 `for` 문에 쓸 수 없습니다. 증가식이 재할당이기 때문입니다. `for...of`에는 쓸 수 있습니다. `for...of`는 반복마다 새 바인딩을 선언하고 값을 넣을 뿐 재할당하지 않습니다.
+
+### 꼬리 2. `var`로 같은 결과를 내려면 어떻게 하나요?
+
+함수를 호출해서 반복마다 새 함수 스코프를 만듭니다. `let`이 없던 시절 쓰던 방법입니다.
+
+```js
+for (var i = 0; i < 3; i++) {
+  (function (index) {
+    setTimeout(() => console.log(index));
+  })(i);
+}
+// 0, 1, 2
+```
+
+### 꼬리 3. 전역에서 `var`와 `let`으로 선언하면 차이가 있나요?
+
+일반 `<script>`에서는 있습니다.
+
+```js
+var legacy = 1;
+let modern = 2;
+
+window.legacy; // 1
+window.modern; // undefined
+```
+
+전역 Environment Record는 두 부분으로 나뉩니다. 전역 객체를 감싼 부분에는 `var`와 함수 선언이 들어가서 `window`의 프로퍼티가 됩니다. 나머지 부분에는 `let`, `const`, `class`가 들어가고 `window`에는 붙지 않습니다. 다만 같은 페이지의 다른 `<script>`에서는 `modern`이 보입니다. 전역 스코프 자체는 공유하기 때문입니다.
+
+ES 모듈은 최상위 선언이 모듈 스코프에 들어가므로 `var`든 `let`이든 전역이 아닙니다. 번들러로 모듈을 쓰는 프로젝트에서 전역 변수 충돌을 거의 겪지 않는 이유입니다.
+
+## 30초 답변
+
+렉시컬 스코프. 정의된 위치의 `[[Environment]]`로 바깥이 정해진다.
+
+이어질 꼬리질문: `for` + `let`, 전역 `let`과 `window`.

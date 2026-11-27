@@ -1,0 +1,201 @@
+---
+title: "실행 컨텍스트는 무엇이고 this는 어떻게 정해질까?"
+summary: "실행 컨텍스트가 무엇이고 콜 스택에 어떻게 쌓이는지 정리합니다. 생성 단계와 실행 단계, 콜 스택 초과와 꼬리 재귀 최적화, this가 정해지는 규칙, 메서드를 콜백으로 넘기면 this가 사라지는 이유까지 코드로 확인합니다."
+date: 2026-10-16
+category: "javascript"
+tags: ["javascript", "interview", "execution-context", "this"]
+cover: "layers"
+draft: true
+---
+
+면접에서 말로 설명하지 못했던 자바스크립트 개념을 주제별로 다시 정리하고 있습니다. 이 글은 실행 컨텍스트에 대한 첫 질문과 답, 이어질 수 있는 꼬리질문과 답을 적었습니다.
+
+정리하게 된 이유는 [이벤트 루프 글](/posts/javascript-event-loop)에 적었습니다.
+
+> [!NOTE] 기준
+> 언어 동작은 ECMAScript 표준, 브라우저 동작은 HTML 표준 기준입니다. 출력 순서를 적은 예제는 Node 24와 Chromium 155에서 실행해 확인했습니다. 따로 적지 않으면 ES 모듈(strict mode)에서 실행한다고 가정합니다.
+
+## Q. 실행 컨텍스트가 무엇인가요?
+
+**답변**
+
+코드를 실행하는 데 필요한 배경이 되는 조건과 환경을 묶어둔 표준상의 개념입니다. 전역 코드, 함수 호출, 모듈, `eval` 코드를 실행할 때 만들어지고, 실행 컨텍스트 스택에 쌓입니다. 이 스택을 흔히 콜 스택이라고 부릅니다.
+
+> [!IMPORTANT] 콜 스택
+> 지금 실행 중인 함수와, 그 함수가 끝나면 돌아갈 곳을 기록하는 자료구조입니다. 나중에 들어간 것이 먼저 나오는(LIFO) 구조라서 함수를 호출하면 새 컨텍스트가 맨 위에 올라가고, 함수가 끝나면 빠집니다. 맨 위가 지금 실행 중인 컨텍스트이고, 바로 아래가 그 함수를 부른 쪽입니다.
+
+함수 세 개로 보면 이렇습니다.
+
+```js
+function a() {
+  b();
+  c();
+}
+function b() {}
+function c() {}
+a();
+```
+
+![① 시작하면 콜 스택에 전역 컨텍스트만 있다. ② a()를 호출하면 전역 위에 a가 올라간다. ③ a 안에서 b()를 호출하면 b가 올라간다. ④ b가 끝나면 b가 빠지고 a가 다시 맨 위가 된다. ⑤ c()를 호출하면 c가 올라간다. ⑥ c가 끝나면 c가 빠진다. ⑦ a가 끝나면 전역만 남는다. 맨 위가 항상 지금 실행 중인 컨텍스트이고, b와 c는 콜 스택에 함께 있었던 적이 없다.](/posts/javascript-execution-context/call-stack.svg)
+
+정리하면 함수를 실행할 때마다 실행 컨텍스트가 하나씩 생기고, 콜 스택은 그중 지금 진행 중인 것들만 들고 있다고 이해했습니다. 끝난 함수의 컨텍스트는 콜 스택에서 빠집니다.
+
+컨텍스트가 들고 있는 핵심 정보는 이렇습니다.
+
+| 구성 요소           | 쉽게 말하면                         | 담는 것                                                        |
+| ------------------- | ----------------------------------- | -------------------------------------------------------------- |
+| LexicalEnvironment  | 지금 위치에서 보이는 변수 목록      | `let`, `const`, `class`. 블록에 들어갈 때마다 새 목록으로 바뀜 |
+| VariableEnvironment | 함수 전체에서 쓰는 변수 목록        | `var`, 함수 선언. 블록에 들어가도 그대로                       |
+| this                | 함수 안에서 "이 객체"가 가리키는 값 | 함수를 어떻게 호출했는지로 정해짐(꼬리 2)                      |
+
+[스코프 글](/posts/javascript-scope)에서 `var`는 블록을 무시하고 `let`은 블록마다 따로 생기는 이유가 이 차이입니다. 블록에 들어가면 LexicalEnvironment만 새 목록으로 바뀌고 VariableEnvironment는 함수 것 그대로입니다.
+
+두 목록의 실제 내용은 Environment Record라는 구조에 들어 있습니다. Environment Record는 "변수 이름 → 값" 목록과, 바깥 목록을 가리키는 연결(`[[OuterEnv]]`)로 이루어집니다. 변수를 찾을 때 지금 목록에 없으면 이 연결을 따라 바깥 목록으로 올라갑니다. 이게 스코프 체인입니다.
+
+컨텍스트는 두 단계로 동작합니다.
+
+1. **생성 단계**: 코드를 실행하기 전에 컨텍스트 안의 코드를 처음부터 끝까지 훑어서, 선언된 이름(변수 이름, 함수 이름, 매개변수 이름)을 Environment Record에 등록합니다. "식별자 정보를 수집한다"고도 합니다.
+2. **실행 단계**: 코드를 위에서부터 한 줄씩 실행합니다. 할당문에 도착하면 그때 Environment Record의 값을 바꿉니다.
+
+```js
+function run(id) {
+  var count = 1;
+  let name = "kim";
+  function log() {}
+}
+run(7);
+```
+
+`run(7)`을 호출하면 본문 첫 줄을 실행하기 전에 Environment Record가 이렇게 채워집니다.
+
+```yaml
+id: 7 (매개변수는 넘긴 값으로 바로 채워짐)
+count: undefined (var)
+name: 초기화 안 됨 (let)
+log: 함수 객체 (함수 선언은 통째로)
+```
+
+`= 1`, `= "kim"` 같은 할당은 이때 처리되지 않습니다. 생성 단계는 이름만 모으고, 값은 실행 단계에서 그 줄에 도착했을 때 들어갑니다.
+
+**이렇게 실행 전에 선언을 Environment Record에 먼저 담아두는 것이 자주 듣는 호이스팅입니다.** 이름이 미리 등록돼 있으니, 선언보다 위에서 그 이름을 써도 엔진은 이미 그 이름을 알고 있습니다. 선언 종류마다 등록되는 값이 다른 이유와 그 결과는 [호이스팅과 TDZ 글](/posts/javascript-hoisting-and-tdz)에서 다룹니다.
+
+> [!NOTE] 책마다 용어가 다른 이유
+> ES3 시절 자료는 Variable Object, Activation Object, Scope Chain이라는 용어를 씁니다. ES5에서 Lexical Environment로 바뀌었고, ES2015부터는 this도 Environment Record 안으로 들어갔습니다. 이 글은 ES2015 이후 용어로 적었습니다.
+
+에러의 스택 트레이스가 그 순간의 실행 컨텍스트 스택입니다.
+
+### 꼬리 1. 콜 스택이 넘치면 어떻게 되나요? 꼬리 재귀 최적화는 되나요?
+
+`RangeError: Maximum call stack size exceeded`가 납니다. 한계 깊이는 엔진과 스택 크기 설정에 따라 다릅니다.
+
+ES2015 표준에는 꼬리 호출 최적화(proper tail calls)가 들어 있습니다. strict mode에서 함수의 마지막 동작이 다른 함수 호출이면 현재 프레임을 재사용하는 규칙입니다. 하지만 이걸 구현한 주요 엔진은 Safari의 JavaScriptCore뿐입니다. V8과 SpiderMonkey는 구현하지 않았습니다. 프레임이 사라지면 스택 트레이스에서 호출 경로가 빠진다는 게 반대 이유 중 하나였습니다.
+
+그래서 깊이를 예측할 수 없는 재귀는 반복문과 명시적 스택으로 바꿉니다.
+
+```js
+function sumTree(root) {
+  let sum = 0;
+  const pending = [root];
+  while (pending.length > 0) {
+    const node = pending.pop();
+    sum += node.value;
+    pending.push(...node.children);
+  }
+  return sum;
+}
+```
+
+### 꼬리 2. `this`는 어떻게 정해지나요?
+
+함수를 **어떻게 호출했는지**로 정해집니다. 어디서 정의했는지가 아닙니다. 화살표 함수만 예외입니다.
+
+| 호출 방식                                       | this                                                  |
+| ----------------------------------------------- | ----------------------------------------------------- |
+| `new Foo()`                                     | 새로 만든 객체                                        |
+| `fn.call(obj)`, `fn.apply(obj)`, `fn.bind(obj)` | 넘긴 `obj`                                            |
+| `obj.method()`                                  | 점 앞의 `obj`                                         |
+| `fn()`                                          | strict mode면 `undefined`, 아니면 전역 객체           |
+| 화살표 함수                                     | 자기 this가 없음. 정의된 위치 바깥의 this를 그대로 씀 |
+
+위에 있을수록 우선합니다. `bind`로 묶은 함수도 `new`로 호출하면 묶어둔 this는 무시됩니다.
+
+```js
+const user = {
+  name: "kim",
+  regular() {
+    console.log(this.name);
+  },
+  arrow: () => {
+    console.log(this?.name);
+  },
+  nested() {
+    function inner() {
+      console.log(this?.name);
+    }
+    const innerArrow = () => console.log(this.name);
+    inner();
+    innerArrow();
+  },
+};
+
+user.regular(); // kim
+user.arrow(); // undefined
+user.nested(); // undefined, kim
+```
+
+- `arrow`: 객체 리터럴의 중괄호는 스코프를 만들지 않습니다. 화살표 함수의 바깥은 모듈 최상위이고, 모듈 최상위의 this는 `undefined`입니다.
+- `inner`: 메서드 안에서 정의했어도 `inner()`는 점 없이 호출했습니다. strict mode라 `undefined`입니다.
+- `innerArrow`: 바깥인 `nested`의 this를 씁니다. `nested`는 `user.nested()`로 호출했으므로 `user`입니다.
+
+### 꼬리 3. 메서드를 콜백으로 넘기면 왜 this가 사라지나요?
+
+```js
+class Counter {
+  count = 0;
+  increase() {
+    this.count += 1;
+  }
+}
+
+const counter = new Counter();
+const { increase } = counter;
+increase(); // TypeError: Cannot read properties of undefined (reading 'count')
+
+button.addEventListener("click", counter.increase); // this는 button
+```
+
+`counter.increase`는 함수 값만 꺼냅니다. 어느 객체에서 꺼냈는지는 함께 넘어가지 않습니다. 호출 시점에 점 앞에 객체가 없으니 기본 규칙이 적용되고, class 본문은 항상 strict mode라 `undefined`입니다. `addEventListener`는 콜백을 호출할 때 this를 리스너가 걸린 요소로 지정합니다.
+
+해결 방법은 셋입니다.
+
+```js
+// 1. 넘기는 쪽에서 화살표 함수로 감싼다
+button.addEventListener("click", () => counter.increase());
+
+// 2. 생성자에서 bind한다
+class BoundCounter {
+  count = 0;
+  constructor() {
+    this.increase = this.increase.bind(this);
+  }
+  increase() {
+    this.count += 1;
+  }
+}
+
+// 3. 클래스 필드에 화살표 함수를 둔다
+class ArrowCounter {
+  count = 0;
+  increase = () => {
+    this.count += 1;
+  };
+}
+```
+
+3번이 가장 편하지만 트레이드오프가 있습니다. 메서드가 프로토타입에 한 번 있는 게 아니라 인스턴스마다 새로 만들어집니다. 인스턴스가 많으면 메모리를 더 쓰고, 자식 클래스에서 `super.increase()`로 부를 수 없습니다.
+
+## 30초 답변
+
+실행에 필요한 환경. 생성 단계에서 선언을 등록하고 실행 단계에서 코드를 돈다.
+
+이어질 꼬리질문: 콜 스택 초과, `this` 결정 규칙, 메서드를 콜백으로 넘길 때.

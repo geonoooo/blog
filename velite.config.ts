@@ -23,7 +23,14 @@ const codeTheme = {
   }),
 };
 
-const POST_CATEGORIES = ["typescript", "deep-dive", "react", "tooling", "backend"] as const;
+const POST_CATEGORIES = [
+  "javascript",
+  "typescript",
+  "deep-dive",
+  "react",
+  "tooling",
+  "backend",
+] as const;
 
 // 목록 카드 커버 모티프. src/entities/post/model/post-query.ts의 POST_COVERS와 같은 값을
 // 유지한다. velite 설정은 @/ alias를 못 읽어서 여기서 한 번 더 적는다.
