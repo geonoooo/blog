@@ -1,0 +1,135 @@
+---
+title: "ES Module과 CommonJS는 무엇이 다를까?"
+summary: "ES Module과 CommonJS가 무엇이 다른지 정리합니다. live binding, 트리 셰이킹이 ES Module에서 잘 되는 이유, 순환 참조, Node에서 둘을 섞어 쓰는 방법, script type=module과 일반 스크립트의 차이까지 코드로 확인합니다."
+date: 2026-10-16
+category: "javascript"
+tags: ["javascript", "interview", "esm", "commonjs"]
+cover: "layers"
+draft: true
+---
+
+면접에서 말로 설명하지 못했던 자바스크립트 개념을 주제별로 다시 정리하고 있습니다. 이 글은 ES Module과 CommonJS에 대한 첫 질문과 답, 이어질 수 있는 꼬리질문과 답을 적었습니다.
+
+정리하게 된 이유는 [이벤트 루프 글](/posts/javascript-event-loop)에 적었습니다.
+
+> [!NOTE] 기준
+> 언어 동작은 ECMAScript 표준, 브라우저 동작은 HTML 표준 기준입니다. 출력 순서를 적은 예제는 Node 24와 Chromium 155에서 실행해 확인했습니다. 따로 적지 않으면 ES 모듈(strict mode)에서 실행한다고 가정합니다.
+
+## Q. ES Module과 CommonJS는 무엇이 다른가요?
+
+**답변**
+
+| 항목                 | CommonJS                        | ES Module                                   |
+| -------------------- | ------------------------------- | ------------------------------------------- |
+| 문법                 | `require`, `module.exports`     | `import`, `export`                          |
+| 의존성이 정해지는 때 | 실행 중 (`require`는 함수 호출) | 실행 전 (`import` 선언은 최상위에만)        |
+| 로딩                 | 동기                            | 파싱 → 연결 → 평가 단계로 나뉨, 비동기 가능 |
+| 내보낸 값            | `module.exports` 객체           | 원본 변수와 연결된 live binding             |
+| 최상위 this          | `module.exports`                | `undefined`                                 |
+| strict mode          | 직접 선언해야 함                | 항상                                        |
+| top-level await      | 불가                            | 가능                                        |
+| 파일 경로            | `__dirname`, `__filename`       | `import.meta.url`, `import.meta.dirname`    |
+
+가장 큰 차이는 정적이냐 동적이냐입니다. `require`는 일반 함수 호출이라 `if` 안에서 부를 수도 있고 경로를 변수로 만들 수도 있습니다. 그래서 코드를 실행하기 전에는 의존성을 확정할 수 없습니다. `import` 선언은 모듈 최상위에서 문자열 리터럴 경로로만 쓸 수 있습니다. 코드를 실행하지 않고도 의존성 그래프가 정해집니다. 아래 꼬리질문들은 대부분 이 차이에서 나옵니다.
+
+### 꼬리 1. live binding이 무엇인가요?
+
+같은 카운터를 두 방식으로 내보내 봅니다.
+
+```js
+// counter.cjs
+let count = 0;
+function increase() {
+  count++;
+}
+module.exports = { count, increase };
+
+// main.cjs
+const counter = require("./counter.cjs");
+counter.increase();
+console.log(counter.count); // 0
+```
+
+```js
+// counter.mjs
+export let count = 0;
+export function increase() {
+  count++;
+}
+
+// main.mjs
+import { count, increase } from "./counter.mjs";
+increase();
+console.log(count); // 1
+count = 5; // TypeError: Assignment to constant variable.
+```
+
+CommonJS는 `module.exports = { count }`가 실행되는 순간의 값 0을 객체 프로퍼티에 넣습니다. 그 뒤 모듈 안의 `count`가 바뀌어도 프로퍼티는 0입니다. ES Module의 `import`는 값을 복사하지 않고 원본 변수에 연결된 읽기 전용 참조를 만듭니다. 원본이 바뀌면 import한 쪽에서도 바뀐 값이 보이고, import한 쪽에서 재할당하면 에러가 납니다.
+
+### 꼬리 2. 트리 셰이킹이 ES Module에서 잘 되는 이유는 무엇인가요?
+
+번들러는 코드를 실행하지 않고 분석합니다. ES Module은 어느 모듈에서 어느 이름을 가져오는지가 문법으로 고정돼 있어서, 쓰이지 않는 export를 빌드할 때 지울 수 있습니다. CommonJS는 `module.exports[name] = ...`처럼 실행해봐야 결과를 아는 코드가 가능해서 안전하게 지우기 어렵습니다.
+
+ES Module이라고 다 지워지지는 않습니다. 모듈을 평가하는 것 자체가 부수 효과를 가질 수 있기 때문입니다. 전역 객체를 수정하는 폴리필이나 CSS import가 그렇습니다. 번들러는 부수 효과가 없다고 확신할 수 없으면 모듈을 남깁니다. 라이브러리는 `package.json`의 `"sideEffects": false`로 부수 효과가 없다고 알려줍니다.
+
+배럴 파일로 re-export를 모았을 때 코드 스플리팅이 깨지는 경우는 [React.lazy를 썼는데 왜 다른 페이지까지 로딩될까?](/posts/vite-bundle-optimization)에서 측정했습니다.
+
+### 꼬리 3. 순환 참조가 있으면 어떻게 동작하나요?
+
+두 방식의 결과가 다릅니다.
+
+```js
+// a.mjs
+import { b } from "./b.mjs";
+export const a = "a";
+
+// b.mjs
+import { a } from "./a.mjs";
+export const b = "b";
+console.log(a); // ReferenceError: Cannot access 'a' before initialization
+```
+
+`node a.mjs`로 실행하면 `a.mjs`가 의존하는 `b.mjs`가 먼저 평가됩니다. 바인딩 연결은 실행 전에 끝나 있으므로 `b.mjs`는 `a`라는 이름을 압니다. 하지만 `a.mjs` 본문은 아직 실행되지 않아서 `a`는 TDZ 상태입니다. [호이스팅과 TDZ 글](/posts/javascript-hoisting-and-tdz)에서 본 TDZ가 모듈 단위로 나타나는 경우입니다.
+
+```js
+// a.cjs
+exports.before = "before";
+const b = require("./b.cjs");
+exports.after = "after";
+
+// b.cjs
+const a = require("./a.cjs");
+console.log(a); // { before: 'before' }
+```
+
+CommonJS는 실행 중인 모듈의 `exports` 객체를 미완성인 채로 돌려줍니다. 에러 없이 `after`가 빠진 객체를 받습니다. 에러가 나지 않으니 문제를 늦게 발견합니다.
+
+해결은 순환을 끊는 것입니다. 두 모듈이 같이 쓰는 부분을 세 번째 모듈로 빼거나, 배럴 파일 대신 실제 파일 경로로 import합니다.
+
+### 꼬리 4. Node에서 둘을 섞어 쓸 수 있나요?
+
+파일 종류는 이렇게 정해집니다.
+
+```yaml
+.mjs: 항상 ES Module
+.cjs: 항상 CommonJS
+.js: 가장 가까운 package.json의 type이 module이면 ES Module, 없거나 commonjs면 CommonJS
+```
+
+- **ES Module에서 CommonJS를 import**: 됩니다. `module.exports`가 default export로 들어옵니다. named import는 Node가 정적 분석으로 찾아낼 수 있는 export만 됩니다.
+- **CommonJS에서 ES Module을 불러오기**: 동적 `import()`로 됩니다. Promise를 반환합니다. Node 22.12부터는 top-level await이 없는 ES Module을 `require()`로도 불러올 수 있습니다.
+
+동적 `import()`는 정적 구조의 예외입니다. 경로를 실행 중에 정할 수 있고 Promise를 반환합니다. 번들러는 동적 `import()`로 불러온 모듈을 별도 청크로 나눕니다. `React.lazy`도 이 동작을 이용합니다.
+
+### 꼬리 5. 브라우저의 `<script type="module">`은 일반 스크립트와 무엇이 다른가요?
+
+- `defer`를 붙인 것처럼 동작합니다. HTML 파싱을 막지 않고, 파싱이 끝난 뒤 문서 순서대로 실행됩니다.
+- 항상 strict mode이고, 최상위 선언이 전역이 되지 않습니다.
+- 같은 URL의 모듈은 여러 번 import해도 한 번만 평가됩니다.
+- 다른 출처의 모듈을 불러오려면 CORS 헤더가 필요합니다. 그래서 `file://`로 연 HTML에서는 모듈 스크립트가 동작하지 않습니다.
+
+## 30초 답변
+
+정적 `import`와 live binding 대 동적 `require`와 값 복사.
+
+이어질 꼬리질문: 트리 셰이킹, 순환 참조, Node에서 섞어 쓰기.

@@ -1,0 +1,112 @@
+---
+title: "undefined와 null은 어떻게 다를까?"
+summary: "undefined와 null이 어떻게 다른지 정리합니다. 기본값이 null에도 적용되는지, ||와 ??의 차이, 둘을 한 번에 확인하는 방법, API를 설계할 때 둘을 구분해야 하는 경우까지 코드로 확인합니다."
+date: 2026-10-16
+category: "javascript"
+tags: ["javascript", "interview", "undefined", "null"]
+cover: "layers"
+draft: true
+---
+
+면접에서 말로 설명하지 못했던 자바스크립트 개념을 주제별로 다시 정리하고 있습니다. 이 글은 undefined와 null에 대한 첫 질문과 답, 이어질 수 있는 꼬리질문과 답을 적었습니다.
+
+정리하게 된 이유는 [이벤트 루프 글](/posts/javascript-event-loop)에 적었습니다.
+
+> [!NOTE] 기준
+> 언어 동작은 ECMAScript 표준, 브라우저 동작은 HTML 표준 기준입니다. 출력 순서를 적은 예제는 Node 24와 Chromium 155에서 실행해 확인했습니다. 따로 적지 않으면 ES 모듈(strict mode)에서 실행한다고 가정합니다.
+
+## Q. `undefined`와 `null`은 어떻게 다른가요?
+
+**답변**
+
+둘 다 값이 없다는 뜻의 원시값이고, 누가 넣느냐가 다릅니다. `undefined`는 엔진이 넣는 "아직 할당되지 않음"입니다. 선언만 한 변수, 없는 프로퍼티, `return`이 없는 함수의 반환값, 넘기지 않은 인자가 `undefined`입니다. `null`은 개발자가 "값이 없음"을 의도적으로 넣을 때 씁니다.
+
+```js
+let selectedId; // undefined: 아직 고르지 않았다
+selectedId = null; // null: 선택을 해제했다
+```
+
+동작 차이는 이렇습니다.
+
+| 항목                          | `undefined`   | `null`            |
+| ----------------------------- | ------------- | ----------------- |
+| `typeof`                      | `"undefined"` | `"object"`        |
+| `Number()`                    | `NaN`         | `0`               |
+| `JSON.stringify` 프로퍼티     | 키가 빠짐     | `null`로 남음     |
+| 기본 매개변수·구조분해 기본값 | 기본값 적용   | 기본값 적용 안 됨 |
+| `== null`                     | `true`        | `true`            |
+
+`typeof null`이 `"object"`인 건 첫 구현의 버그입니다. 값의 타입을 태그 비트로 구분했는데 객체 태그가 0이었고, `null`은 널 포인터라 태그 자리가 0이었습니다. 고치면 기존 웹 코드가 깨지기 때문에 그대로 남았습니다.
+
+### 꼬리 1. 기본값은 `null`에도 적용되나요?
+
+적용되지 않습니다. 기본 매개변수와 구조분해 기본값은 `undefined`일 때만 적용됩니다.
+
+```js
+function greet(name = "guest") {
+  return name;
+}
+greet(undefined); // "guest"
+greet(null); // null
+
+const { nickname = "익명" } = { nickname: null };
+nickname; // null
+```
+
+API 응답에서 값이 없는 필드를 `null`로 주면 구조분해 기본값이 동작하지 않습니다. 이럴 때는 `nickname ?? "익명"`으로 받습니다.
+
+### 꼬리 2. `||`와 `??`는 어떻게 다른가요?
+
+`||`는 왼쪽이 falsy(`false`, `0`, `""`, `NaN`, `null`, `undefined`)면 오른쪽을 씁니다. `??`는 왼쪽이 `null`이나 `undefined`일 때만 오른쪽을 씁니다.
+
+```js
+0 || 10; // 10
+0 ?? 10; // 0
+"" || "전체"; // "전체"
+"" ?? "전체"; // ""
+```
+
+`0`이나 빈 문자열이 정상 값인 곳에서 `||`를 쓰면 버그가 됩니다.
+
+```js
+function getPageSize(options) {
+  return options.pageSize || 20; // pageSize에 0을 넘겨도 20
+}
+
+function getPageSizeFixed(options) {
+  return options.pageSize ?? 20; // null, undefined일 때만 20
+}
+```
+
+### 꼬리 3. `null`과 `undefined`를 한 번에 확인하려면 어떻게 하나요?
+
+`value == null`입니다. `==`는 `null`과 `undefined`끼리만 같다고 보고 다른 값과는 같지 않다고 봅니다. `value === null || value === undefined`와 결과가 같습니다. ESLint `eqeqeq` 규칙도 `{ null: "ignore" }` 옵션으로 이 경우만 허용할 수 있습니다.
+
+`!value`로 확인하면 `0`과 `""`까지 걸러지므로 의미가 다릅니다.
+
+비교 연산자 쪽에는 함정이 하나 있습니다.
+
+```js
+null == 0; // false
+null > 0; // false
+null >= 0; // true
+```
+
+`>`, `>=` 같은 관계 비교는 `null`을 숫자 0으로 바꿔서 비교합니다. `==`는 숫자로 바꾸지 않고 `null`을 `undefined`하고만 같다고 봅니다. 규칙이 다른 두 연산이라 결과가 맞지 않습니다.
+
+### 꼬리 4. API를 설계할 때 둘을 구분해야 하는 경우가 있나요?
+
+부분 수정(PATCH) 요청이 대표적입니다. 필드를 보내지 않으면 "바꾸지 않음", `null`을 보내면 "값을 지움"으로 구분합니다. 프론트에서 `undefined`로 두면 `JSON.stringify`가 키를 빼버리므로 이 구분이 그대로 전달됩니다.
+
+```js
+JSON.stringify({ nickname: undefined, bio: null });
+// '{"bio":null}'
+```
+
+배열 안의 `undefined`는 빠지지 않고 `null`로 바뀝니다. `JSON.stringify([undefined])`는 `'[null]'`입니다.
+
+## 30초 답변
+
+엔진이 넣는 미할당과 개발자가 넣는 값 없음.
+
+이어질 꼬리질문: 기본값과 `null`, `??`와 `||`, PATCH에서 구분.
